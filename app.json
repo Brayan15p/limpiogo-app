@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "limpiogo-app",
+    "slug": "limpio-go",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563EB",
+          "androidMode": "default",
+          "androidCollapsedTitle": "LimpioGO"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3c6ac95e-4ba1-4ef5-b727-19f0602cd0dd"
+      }
+    },
+    "owner": "limpiogos-organization",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3c6ac95e-4ba1-4ef5-b727-19f0602cd0dd"
+    }
+  }
+}
