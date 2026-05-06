@@ -94,7 +94,10 @@ export function BookingScreen({ navigation }: any) {
           <Text style={styles.successEmoji}>🎉</Text>
           <Text style={styles.successTitle}>¡Servicio publicado!</Text>
           <Text style={styles.successSub}>Los profesionales cerca de ti verán tu solicitud y enviarán ofertas pronto.</Text>
-          <Pressable style={[styles.primaryBtn, { marginTop: Spacing.xxl }]} onPress={() => navigation.goBack()}>
+          <Pressable
+            style={[styles.primaryBtn, { marginTop: Spacing.xxl }]}
+            onPress={() => navigation.navigate('ClientTabs', { screen: 'Bookings' })}
+          >
             <Text style={styles.primaryBtnText}>Ver mis servicios</Text>
           </Pressable>
         </SafeAreaView>

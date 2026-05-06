@@ -2,10 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  Alert, Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, View,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform,
+  Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
 
 type MenuItem = {
@@ -19,10 +21,14 @@ type MenuItem = {
   danger?: boolean;
 };
 
-export function ProfileScreen() {
-  const { profile, signOut } = useAuth();
+export function ProfileScreen({ navigation }: any) {
+  const { profile, signOut, updateProfile } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [location, setLocation] = useState(true);
+  const [editVisible, setEditVisible] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const isPro = profile?.role === 'pro';
   const initial = profile?.full_name?.charAt(0).toUpperCase() ?? 'U';
@@ -35,18 +41,56 @@ export function ProfileScreen() {
     ]);
   };
 
+  const openEditProfile = () => {
+    setEditName(profile?.full_name ?? '');
+    setEditPhone(profile?.phone ?? '');
+    setEditVisible(true);
+  };
+
+  const saveProfile = async () => {
+    const name = editName.trim();
+    if (!name) { Alert.alert('Error', 'El nombre no puede estar vacío'); return; }
+    setSaving(true);
+    const { error } = await updateProfile({ full_name: name, phone: editPhone.trim() || undefined });
+    setSaving(false);
+    if (error) { Alert.alert('Error', 'No se pudo guardar. Intenta de nuevo.'); return; }
+    setEditVisible(false);
+  };
+
+  const handleChangePassword = () => {
+    Alert.alert(
+      'Cambiar contraseña',
+      `Se enviará un enlace de recuperación a ${profile?.email ?? 'tu correo'}.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Enviar',
+          onPress: async () => {
+            if (!profile?.email) return;
+            const { error } = await supabase.auth.resetPasswordForEmail(profile.email);
+            if (error) Alert.alert('Error', error.message);
+            else Alert.alert('Enviado', 'Revisa tu bandeja de entrada.');
+          },
+        },
+      ],
+    );
+  };
+
+  const comingSoon = (label: string) =>
+    Alert.alert(label, 'Esta función estará disponible pronto.');
+
   const SECTIONS: { title: string; items: MenuItem[] }[] = [
     {
       title: 'Mi cuenta',
       items: [
-        { icon: 'person-outline', label: 'Editar perfil', sub: 'Nombre, foto, descripción' },
-        { icon: 'lock-closed-outline', label: 'Cambiar contraseña' },
+        { icon: 'person-outline', label: 'Editar perfil', sub: 'Nombre, teléfono', action: openEditProfile },
+        { icon: 'lock-closed-outline', label: 'Cambiar contraseña', action: handleChangePassword },
         ...(isPro ? [
-          { icon: 'card-outline', label: 'Método de cobro', sub: 'Configura cómo recibes pagos' },
-          { icon: 'star-outline', label: 'Mis reseñas', sub: `${profile?.rating ?? 0} ★ promedio` },
+          { icon: 'card-outline', label: 'Método de cobro', sub: 'Configura cómo recibes pagos', action: () => comingSoon('Método de cobro') },
+          { icon: 'star-outline', label: 'Mis reseñas', sub: `${profile?.rating ?? 0} ★ promedio`, action: () => comingSoon('Mis reseñas') },
         ] : [
-          { icon: 'card-outline', label: 'Métodos de pago', sub: 'Tarjetas y saldo' },
-          { icon: 'location-outline', label: 'Mis direcciones' },
+          { icon: 'card-outline', label: 'Métodos de pago', sub: 'Tarjetas y saldo', action: () => comingSoon('Métodos de pago') },
+          { icon: 'location-outline', label: 'Mis direcciones', action: () => comingSoon('Mis direcciones') },
         ]),
       ],
     },
@@ -177,6 +221,44 @@ export function ProfileScreen() {
 
         </ScrollView>
       </SafeAreaView>
+
+      {/* Modal editar perfil */}
+      <Modal visible={editVisible} transparent animationType="slide" onRequestClose={() => setEditVisible(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={[styles.modalSheet, Shadow.md]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Editar perfil</Text>
+              <Pressable onPress={() => setEditVisible(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color={Colors.ink} />
+              </Pressable>
+            </View>
+            <Text style={styles.modalLabel}>Nombre completo</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Tu nombre"
+              placeholderTextColor={Colors.ink4}
+              autoCapitalize="words"
+            />
+            <Text style={styles.modalLabel}>Teléfono</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editPhone}
+              onChangeText={setEditPhone}
+              placeholder="+57 300 000 0000"
+              placeholderTextColor={Colors.ink4}
+              keyboardType="phone-pad"
+            />
+            <Pressable style={[styles.modalSaveBtn, Shadow.cta]} onPress={saveProfile} disabled={saving}>
+              {saving
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.modalSaveTxt}>Guardar cambios</Text>
+              }
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -247,4 +329,24 @@ const styles = StyleSheet.create({
   rowLabel: { ...Typography.bodyMed, color: Colors.ink },
   rowLabelDanger: { color: Colors.danger },
   rowSub: { ...Typography.caption, color: Colors.ink3, marginTop: 1 },
+
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalSheet: {
+    backgroundColor: Colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: Spacing.xl, paddingBottom: 36, gap: Spacing.sm,
+  },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+  modalTitle: { ...Typography.h3, color: Colors.ink },
+  modalLabel: { ...Typography.caption, color: Colors.ink3, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: Spacing.sm },
+  modalInput: {
+    ...Typography.body, color: Colors.ink,
+    borderWidth: 1, borderColor: Colors.sky200,
+    borderRadius: Radius.lg, paddingHorizontal: Spacing.lg, paddingVertical: 13,
+    backgroundColor: Colors.bg,
+  },
+  modalSaveBtn: {
+    backgroundColor: Colors.primary, borderRadius: Radius.lg,
+    paddingVertical: 15, alignItems: 'center', marginTop: Spacing.lg,
+  },
+  modalSaveTxt: { ...Typography.bodyMed, color: '#fff', fontWeight: '700' },
 });

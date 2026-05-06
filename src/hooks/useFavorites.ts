@@ -58,11 +58,22 @@ export function useFavorites() {
       }
     }
 
-    if (isFav) {
-      await supabase.from('favorites').delete()
-        .eq('user_id', profile.id).eq('pro_id', proId);
-    } else {
-      await supabase.from('favorites').insert({ user_id: profile.id, pro_id: proId });
+    const { error } = isFav
+      ? await supabase.from('favorites').delete().eq('user_id', profile.id).eq('pro_id', proId)
+      : await supabase.from('favorites').insert({ user_id: profile.id, pro_id: proId });
+
+    // Rollback on DB error
+    if (error) {
+      if (isFav) {
+        setFavIds(prev => new Set([...prev, proId]));
+        if (proData) {
+          setFavPros(prev => [...prev, { pro_id: proId, full_name: '', rating: null,
+            total_reviews: 0, bio: null, is_verified: false, ...proData }]);
+        }
+      } else {
+        setFavIds(prev => { const s = new Set(prev); s.delete(proId); return s; });
+        setFavPros(prev => prev.filter(p => p.pro_id !== proId));
+      }
     }
   }, [profile?.id, favIds]);
 

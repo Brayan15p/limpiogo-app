@@ -71,7 +71,7 @@ export function ChatScreen({ route, navigation }: any) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [jobId]);
+  }, [jobId, profile?.id, otherName]);
 
   // Marcar como leídos
   useEffect(() => {
