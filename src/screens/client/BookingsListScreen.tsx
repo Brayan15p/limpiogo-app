@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Pressable, RefreshControl,
+  ActivityIndicator, Alert, FlatList, Pressable, RefreshControl,
   StatusBar, StyleSheet, Text, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,9 +55,22 @@ export function BookingsListScreen({ navigation }: any) {
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
-  const cancelJob = async (id: string) => {
-    await supabase.from('jobs').update({ status: 'cancelled' }).eq('id', id);
-    setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'cancelled' } : j));
+  const cancelJob = (id: string) => {
+    Alert.alert(
+      'Cancelar servicio',
+      '¿Seguro que quieres cancelar este servicio? Esta acción no se puede deshacer.',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Sí, cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            await supabase.from('jobs').update({ status: 'cancelled' }).eq('id', id);
+            setJobs(prev => prev.map(j => j.id === id ? { ...j, status: 'cancelled' } : j));
+          },
+        },
+      ],
+    );
   };
 
   const renderItem = ({ item }: { item: Job }) => {

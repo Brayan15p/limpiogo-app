@@ -10,6 +10,7 @@ export interface Profile {
   country_code?: string;
   rating?: number;
   total_reviews?: number;
+  is_online?: boolean;
   created_at: string;
 }
 

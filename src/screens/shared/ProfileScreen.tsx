@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform,
   Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View,
@@ -9,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
+
+const NOTIF_KEY = 'limpiogo_notif_enabled';
 
 type MenuItem = {
   icon: string;
@@ -23,8 +26,8 @@ type MenuItem = {
 
 export function ProfileScreen({ navigation }: any) {
   const { profile, signOut, updateProfile } = useAuth();
-  const [notifications, setNotifications] = useState(true);
-  const [location, setLocation] = useState(true);
+  const [notifications, setNotificationsState] = useState(true);
+  const [location, setLocationState] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -33,6 +36,25 @@ export function ProfileScreen({ navigation }: any) {
   const isPro = profile?.role === 'pro';
   const initial = profile?.full_name?.charAt(0).toUpperCase() ?? 'U';
   const name = profile?.full_name ?? 'Usuario';
+
+  // Cargar preferencias persistidas al montar
+  useEffect(() => {
+    SecureStore.getItemAsync(NOTIF_KEY).then(val => {
+      if (val !== null) setNotificationsState(val === '1');
+    });
+    // Ubicación viene de profiles.is_online
+    if (profile?.is_online !== undefined) setLocationState(!!profile.is_online);
+  }, [profile?.is_online]);
+
+  const toggleNotifications = async (value: boolean) => {
+    setNotificationsState(value);
+    await SecureStore.setItemAsync(NOTIF_KEY, value ? '1' : '0');
+  };
+
+  const toggleLocation = async (value: boolean) => {
+    setLocationState(value);
+    await supabase.from('profiles').update({ is_online: value }).eq('id', profile!.id);
+  };
 
   const handleSignOut = () => {
     Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
@@ -48,10 +70,10 @@ export function ProfileScreen({ navigation }: any) {
   };
 
   const saveProfile = async () => {
-    const name = editName.trim();
-    if (!name) { Alert.alert('Error', 'El nombre no puede estar vacío'); return; }
+    const trimmedName = editName.trim();
+    if (!trimmedName) { Alert.alert('Error', 'El nombre no puede estar vacío'); return; }
     setSaving(true);
-    const { error } = await updateProfile({ full_name: name, phone: editPhone.trim() || undefined });
+    const { error } = await updateProfile({ full_name: trimmedName, phone: editPhone.trim() || undefined });
     setSaving(false);
     if (error) { Alert.alert('Error', 'No se pudo guardar. Intenta de nuevo.'); return; }
     setEditVisible(false);
@@ -86,11 +108,13 @@ export function ProfileScreen({ navigation }: any) {
         { icon: 'person-outline', label: 'Editar perfil', sub: 'Nombre, teléfono', action: openEditProfile },
         { icon: 'lock-closed-outline', label: 'Cambiar contraseña', action: handleChangePassword },
         ...(isPro ? [
-          { icon: 'card-outline', label: 'Método de cobro', sub: 'Configura cómo recibes pagos', action: () => comingSoon('Método de cobro') },
-          { icon: 'star-outline', label: 'Mis reseñas', sub: `${profile?.rating ?? 0} ★ promedio`, action: () => comingSoon('Mis reseñas') },
+          { icon: 'calendar-outline',   label: 'Mi disponibilidad',  sub: 'Configura tus horarios',       action: () => navigation.navigate('ProAvailability') },
+          { icon: 'images-outline',     label: 'Mi portafolio',      sub: 'Sube fotos de tus trabajos',   action: () => navigation.navigate('ProPortfolio') },
+          { icon: 'card-outline',       label: 'Método de cobro',    sub: 'Configura cómo recibes pagos', action: () => comingSoon('Método de cobro') },
+          { icon: 'star-outline',       label: 'Mis reseñas',        sub: `${profile?.rating ?? 0} ★ promedio`, action: () => comingSoon('Mis reseñas') },
         ] : [
-          { icon: 'card-outline', label: 'Métodos de pago', sub: 'Tarjetas y saldo', action: () => comingSoon('Métodos de pago') },
-          { icon: 'location-outline', label: 'Mis direcciones', action: () => comingSoon('Mis direcciones') },
+          { icon: 'card-outline',     label: 'Métodos de pago',  sub: 'Tarjetas y saldo',    action: () => comingSoon('Métodos de pago') },
+          { icon: 'location-outline', label: 'Mis direcciones',                               action: () => comingSoon('Mis direcciones') },
         ]),
       ],
     },
@@ -99,22 +123,25 @@ export function ProfileScreen({ navigation }: any) {
       items: [
         {
           icon: 'notifications-outline', label: 'Notificaciones',
-          toggle: true, toggleValue: notifications, onToggle: setNotifications,
+          sub: notifications ? 'Activadas' : 'Desactivadas',
+          toggle: true, toggleValue: notifications, onToggle: toggleNotifications,
         },
         {
-          icon: 'navigate-outline', label: 'Ubicación',
-          toggle: true, toggleValue: location, onToggle: setLocation,
+          icon: 'navigate-outline', label: 'Compartir ubicación',
+          sub: location ? 'Activa' : 'Inactiva',
+          toggle: true, toggleValue: location, onToggle: toggleLocation,
         },
-        { icon: 'moon-outline', label: 'Idioma', sub: 'Español' },
+        { icon: 'language-outline', label: 'Idioma', sub: 'Español' },
       ],
     },
     {
       title: 'Soporte',
       items: [
-        { icon: 'help-circle-outline', label: 'Centro de ayuda' },
-        { icon: 'chatbubble-outline', label: 'Contactar soporte' },
-        { icon: 'document-text-outline', label: 'Términos y privacidad' },
-        { icon: 'information-circle-outline', label: 'Versión', sub: '1.0.0 (beta)' },
+        { icon: 'settings-outline',           label: 'Configuración',       action: () => navigation.navigate('Settings') },
+        { icon: 'help-circle-outline',        label: 'Centro de ayuda',     action: () => navigation.navigate('Support') },
+        { icon: 'notifications-outline',      label: 'Notificaciones',      action: () => navigation.navigate('Notifications') },
+        { icon: 'document-text-outline',      label: 'Términos y privacidad' },
+        { icon: 'information-circle-outline', label: 'Versión',             sub: '1.0.0 (beta)' },
       ],
     },
     {

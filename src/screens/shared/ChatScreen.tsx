@@ -37,6 +37,8 @@ export function ChatScreen({ route, navigation }: any) {
       .order('created_at', { ascending: true });
     setMessages(data ?? []);
     setLoading(false);
+    // Garantizar scroll al fondo tras render (iOS + Android)
+    setTimeout(() => flatRef.current?.scrollToEnd({ animated: false }), 150);
   }, [jobId]);
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
@@ -60,7 +62,7 @@ export function ChatScreen({ route, navigation }: any) {
             Notifications.scheduleNotificationAsync({
               content: {
                 title: otherName,
-                body: newMsg.content,
+                body: 'Nuevo mensaje',   // no exponer contenido en notificación
                 data: { jobId },
               },
               trigger: null,

@@ -82,7 +82,7 @@ export function ProHomeScreen({ navigation }: any) {
         </View>
         {item.budget ? (
           <View style={styles.budgetBadge}>
-            <Text style={styles.budgetText}>${item.budget}</Text>
+            <Text style={styles.budgetText}>${item.budget.toLocaleString('es-CO')}</Text>
           </View>
         ) : null}
       </View>
@@ -224,7 +224,7 @@ export function ProHomeScreen({ navigation }: any) {
             <Text style={styles.fieldLabel}>Precio que ofreces (COP)</Text>
             <TextInput
               style={styles.priceInput}
-              placeholder={`Sugerido: $${offerJob?.budget ?? 0}`}
+              placeholder={`Sugerido: $${(offerJob?.budget ?? 0).toLocaleString('es-CO')}`}
               placeholderTextColor={Colors.ink4}
               keyboardType="numeric"
               value={offerPrice}

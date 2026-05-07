@@ -33,7 +33,7 @@ export function ProJobsScreen({ navigation }: any) {
   const fetchApplications = useCallback(async () => {
     const { data } = await supabase
       .from('applications')
-      .select('*, jobs(id, type, bedrooms, bathrooms, budget, agreed_price, status, scheduled_at, addresses(label, city))')
+      .select('*, jobs(id, type, bedrooms, bathrooms, budget, agreed_price, status, scheduled_at, addresses(label, city), client:profiles!jobs_client_id_fkey(full_name))')
       .eq('pro_id', profile!.id)
       .order('created_at', { ascending: false });
     setApplications(data ?? []);
@@ -131,7 +131,7 @@ export function ProJobsScreen({ navigation }: any) {
           <View style={styles.actionRow}>
             <Pressable
               style={[styles.outlineBtn, { flex: 1 }]}
-              onPress={() => navigation.navigate('Chat', { jobId: item.job_id, otherName: 'Cliente' })}
+              onPress={() => navigation.navigate('Chat', { jobId: item.job_id, otherName: (job?.client as any)?.full_name ?? 'Cliente' })}
             >
               <Ionicons name="chatbubble-outline" size={14} color={Colors.primary} />
               <Text style={styles.outlineBtnText}>Chat</Text>
@@ -153,7 +153,7 @@ export function ProJobsScreen({ navigation }: any) {
         {item.status === 'accepted' && jobStatus !== 'in_progress' && jobStatus !== 'completed' && (
           <Pressable
             style={styles.chatBtn}
-            onPress={() => navigation.navigate('Chat', { jobId: item.job_id, otherName: 'Cliente' })}
+            onPress={() => navigation.navigate('Chat', { jobId: item.job_id, otherName: (job?.client as any)?.full_name ?? 'Cliente' })}
           >
             <Ionicons name="chatbubble-outline" size={14} color={Colors.primary} />
             <Text style={styles.chatBtnText}>Abrir chat</Text>

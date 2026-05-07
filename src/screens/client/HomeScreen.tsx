@@ -115,15 +115,20 @@ export function HomeScreen({ navigation }: any) {
                 <Text style={styles.greeting}>{greeting} 👋</Text>
                 <Text style={styles.name} numberOfLines={1}>{firstName}</Text>
               </View>
-              <Pressable style={styles.avatar} onPress={signOut} hitSlop={8}>
-                <Text style={styles.avatarTxt}>
-                  {profile?.full_name?.charAt(0).toUpperCase() ?? 'U'}
-                </Text>
-              </Pressable>
+              <View style={styles.headerActions}>
+                <Pressable style={styles.bellBtn} onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
+                  <Ionicons name="notifications-outline" size={20} color={Colors.ink2} />
+                </Pressable>
+                <Pressable style={styles.avatar} onPress={() => navigation.navigate('Settings')} hitSlop={8}>
+                  <Text style={styles.avatarTxt}>
+                    {profile?.full_name?.charAt(0).toUpperCase() ?? 'U'}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
-            {/* Búsqueda */}
-            <Pressable style={[styles.search, Shadow.sm]}>
+            {/* Búsqueda — navega a SearchScreen */}
+            <Pressable style={[styles.search, Shadow.sm]} onPress={() => navigation.navigate('Search')}>
               <Ionicons name="search-outline" size={18} color={Colors.ink3} />
               <Text style={styles.searchPh}>Buscar servicio o limpiador…</Text>
               <View style={styles.filterBtn}>
@@ -140,7 +145,7 @@ export function HomeScreen({ navigation }: any) {
                 <Pressable
                   key={s.id}
                   style={[styles.serviceCard, Shadow.card]}
-                  onPress={() => navigation.navigate('Booking')}
+                  onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
                 >
                   <Text style={styles.emoji}>{s.emoji}</Text>
                   <Text style={styles.serviceLabel}>{s.label}</Text>
@@ -222,6 +227,10 @@ const styles = StyleSheet.create({
   headerText: { flex: 1, marginRight: Spacing.md },
   greeting:   { ...Typography.small, color: Colors.ink3 },
   name:       { ...Typography.h2, color: Colors.ink },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
+  bellBtn:    { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.surface,
+                alignItems: 'center', justifyContent: 'center', marginRight: Spacing.sm,
+                borderWidth: 1, borderColor: Colors.sky200 },
   avatar:     { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary,
                 alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarTxt:  { ...Typography.bodyMed, color: '#fff', fontWeight: '800' },

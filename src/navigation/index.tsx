@@ -17,12 +17,20 @@ import { BookingsListScreen } from '../screens/client/BookingsListScreen';
 import { FavoritesScreen } from '../screens/client/FavoritesScreen';
 import { HomeScreen } from '../screens/client/HomeScreen';
 import { MapPickerScreen } from '../screens/client/MapPickerScreen';
+import { ProPublicProfileScreen } from '../screens/client/ProPublicProfileScreen';
 import { ProTrackingScreen } from '../screens/client/ProTrackingScreen';
+import { SearchScreen } from '../screens/client/SearchScreen';
+import { ServiceDetailScreen } from '../screens/client/ServiceDetailScreen';
 import { EarningsScreen } from '../screens/pro/EarningsScreen';
 import { ProHomeScreen } from '../screens/pro/HomeScreen';
 import { ProJobsScreen } from '../screens/pro/JobsScreen';
+import { ProAvailabilityScreen } from '../screens/pro/AvailabilityScreen';
+import { ProPortfolioScreen } from '../screens/pro/PortfolioScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
+import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
+import { SettingsScreen } from '../screens/shared/SettingsScreen';
+import { SupportScreen } from '../screens/shared/SupportScreen';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Colors, Shadow } from '../theme';
 
@@ -75,11 +83,18 @@ function ClientStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="ClientTabs" component={ClientTabs} />
-      <Stack.Screen name="Booking"      component={BookingScreen}      options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="Applications"  component={ApplicationsScreen} />
-      <Stack.Screen name="Chat"          component={ChatScreen} />
-      <Stack.Screen name="MapPicker"     component={MapPickerScreen} options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="ProTracking"   component={ProTrackingScreen} />
+      <Stack.Screen name="Booking"         component={BookingScreen}         options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Applications"   component={ApplicationsScreen} />
+      <Stack.Screen name="Chat"           component={ChatScreen} />
+      <Stack.Screen name="MapPicker"      component={MapPickerScreen}       options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="ProTracking"    component={ProTrackingScreen} />
+      <Stack.Screen name="Search"         component={SearchScreen} />
+      <Stack.Screen name="ProPublicProfile" component={ProPublicProfileScreen} />
+      <Stack.Screen name="ServiceDetail"  component={ServiceDetailScreen} />
+      <Stack.Screen name="Notifications"  component={NotificationsScreen} />
+      <Stack.Screen name="Settings"       component={SettingsScreen} />
+      <Stack.Screen name="Support"        component={SupportScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }
@@ -87,8 +102,14 @@ function ClientStack() {
 function ProStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="ProTabs" component={ProTabs} />
-      <Stack.Screen name="Chat"    component={ChatScreen} />
+      <Stack.Screen name="ProTabs"        component={ProTabs} />
+      <Stack.Screen name="Chat"           component={ChatScreen} />
+      <Stack.Screen name="Notifications"  component={NotificationsScreen} />
+      <Stack.Screen name="Settings"       component={SettingsScreen} />
+      <Stack.Screen name="Support"        component={SupportScreen} />
+      <Stack.Screen name="ProAvailability" component={ProAvailabilityScreen} />
+      <Stack.Screen name="ProPortfolio"   component={ProPortfolioScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }
