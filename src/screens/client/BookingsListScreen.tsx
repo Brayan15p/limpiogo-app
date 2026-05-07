@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Image, Modal,
-  Pressable, RefreshControl, StatusBar, StyleSheet, Text, View,
+  Pressable, RefreshControl, StatusBar, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FirstBookingModal } from '../../components/FirstBookingModal';
+import { GuaranteeSheet } from '../../components/GuaranteeSheet';
 import { ReviewSheet } from '../../components/ReviewSheet';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
@@ -78,6 +80,10 @@ export function BookingsListScreen({ navigation }: any) {
   const [reviewTarget, setReviewTarget] = useState<{ jobId: string; proId: string; proName: string } | null>(null);
   // F17: visor de fotos
   const [photoViewer, setPhotoViewer] = useState<{ before: string; after: string } | null>(null);
+  // F45: garantía
+  const [guaranteeTarget, setGuaranteeTarget] = useState<{ jobId: string } | null>(null);
+  // F46: ritual primera vez
+  const [firstBookingPro, setFirstBookingPro] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
     const [{ data: jobsData }, { data: reviewsData }] = await Promise.all([
@@ -93,6 +99,24 @@ export function BookingsListScreen({ navigation }: any) {
     ]);
     setJobs(jobsData ?? []);
     setReviewed(new Set((reviewsData ?? []).map((r: any) => r.job_id)));
+
+    // F46: detectar primer job completado sin celebrar
+    const profileData = await supabase
+      .from('profiles')
+      .select('first_booking_celebrated')
+      .eq('id', profile!.id)
+      .single();
+
+    if (!profileData.data?.first_booking_celebrated) {
+      const firstCompleted = (jobsData ?? []).find((j: any) => j.status === 'completed');
+      if (firstCompleted) {
+        const proName = (firstCompleted as any).pro?.full_name ?? '';
+        setFirstBookingPro(proName);
+        // marcar como celebrado
+        await supabase.from('profiles').update({ first_booking_celebrated: true }).eq('id', profile!.id);
+      }
+    }
+
     setLoading(false);
     setRefreshing(false);
   }, [profile]);
@@ -121,6 +145,11 @@ export function BookingsListScreen({ navigation }: any) {
     const s        = STATUS_INFO[item.status];
     const proName  = (item as any).pro?.full_name ?? 'Tu limpiador';
     const canReview = item.status === 'completed' && item.pro_id && !reviewed.has(item.id);
+    // F45: ventana de 48h tras completar
+    const completedAt = (item as any).completed_at as string | undefined;
+    const canClaim = item.status === 'completed' &&
+      !!completedAt &&
+      (Date.now() - new Date(completedAt).getTime()) < 48 * 60 * 60 * 1000;
     const photoBefore  = (item as any).photo_before  as string | undefined;
     const photoAfter   = (item as any).photo_after   as string | undefined;
     const hasPhotos    = photoBefore && photoAfter;
@@ -264,6 +293,17 @@ export function BookingsListScreen({ navigation }: any) {
             <Text style={styles.reviewedText}>Calificado</Text>
           </View>
         )}
+
+        {/* F45: Garantía 24h */}
+        {canClaim && (
+          <Pressable
+            style={[styles.guaranteeBtn, Shadow.sm]}
+            onPress={() => setGuaranteeTarget({ jobId: item.id })}
+          >
+            <Ionicons name="shield-checkmark-outline" size={15} color={Colors.warn} />
+            <Text style={styles.guaranteeBtnText}>No quedé satisfecho · Garantía 48h</Text>
+          </Pressable>
+        )}
       </View>
     );
   };
@@ -329,6 +369,23 @@ export function BookingsListScreen({ navigation }: any) {
           onClose={() => setPhotoViewer(null)}
         />
       )}
+
+      {/* F46: Ritual primera vez */}
+      <FirstBookingModal
+        visible={firstBookingPro !== null}
+        proName={firstBookingPro ?? ''}
+        onClose={() => setFirstBookingPro(null)}
+      />
+
+      {/* F45: Garantía sheet */}
+      {guaranteeTarget && (
+        <GuaranteeSheet
+          visible={!!guaranteeTarget}
+          jobId={guaranteeTarget.jobId}
+          onDone={() => setGuaranteeTarget(null)}
+          onDismiss={() => setGuaranteeTarget(null)}
+        />
+      )}
     </View>
   );
 }
@@ -392,6 +449,11 @@ const styles = StyleSheet.create({
                    marginTop: Spacing.sm, paddingVertical: 8, borderRadius: Radius.md,
                    backgroundColor: Colors.okLight },
   reviewedText:  { ...Typography.smallBold, color: Colors.ok },
+
+  guaranteeBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: Spacing.sm,
+                      borderRadius: Radius.md, paddingVertical: 11, paddingHorizontal: Spacing.md,
+                      backgroundColor: Colors.warnLight, borderWidth: 1, borderColor: Colors.warn },
+  guaranteeBtnText: { ...Typography.smallBold, color: Colors.warn, flex: 1 },
 
   empty:        { alignItems: 'center', paddingTop: 60, gap: Spacing.md },
   emptyEmoji:   { fontSize: 48 },

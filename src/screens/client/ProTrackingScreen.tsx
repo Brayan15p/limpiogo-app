@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SosButton } from '../../components/SosButton';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
 
@@ -103,6 +104,9 @@ export function ProTrackingScreen({ navigation, route }: any) {
           )}
         </MapView>
       )}
+
+      {/* F22: SOS */}
+      {!loading && <SosButton bookingId={jobId} />}
 
       {/* Info card */}
       {!loading && (

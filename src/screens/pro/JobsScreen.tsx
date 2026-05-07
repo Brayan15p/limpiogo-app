@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClientReviewSheet } from '../../components/ClientReviewSheet';
+import { SosButton } from '../../components/SosButton';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
@@ -31,6 +32,7 @@ export function ProJobsScreen({ navigation }: any) {
   const [loading, setLoading]               = useState(true);
   const [refreshing, setRefreshing]         = useState(false);
   const [completing, setCompleting]         = useState<string | null>(null);
+  const [activeJobId, setActiveJobId]       = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState<{ id: string; type: 'before' | 'after' } | null>(null);
   // F12: review del cliente
   const [reviewTarget, setReviewTarget]     = useState<{ jobId: string; clientId: string; clientName: string } | null>(null);
@@ -52,6 +54,9 @@ export function ProJobsScreen({ navigation }: any) {
       .order('created_at', { ascending: false });
 
     setApplications(data ?? []);
+    // job activo para SOS
+    const active = (data ?? []).find((a: any) => a.status === 'accepted' && a.jobs?.status === 'in_progress');
+    setActiveJobId(active ? (active as any).job_id : null);
     // registrar qué clientes ya fueron calificados
     const reviewed = new Set(
       (data ?? [])
@@ -399,6 +404,9 @@ export function ProJobsScreen({ navigation }: any) {
           />
         )}
       </SafeAreaView>
+
+      {/* F22: SOS para el pro cuando tiene un job activo */}
+      {activeJobId && <SosButton bookingId={activeJobId} />}
 
       {/* F12: sheet rating cliente */}
       {reviewTarget && (

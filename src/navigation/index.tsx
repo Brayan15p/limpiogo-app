@@ -29,6 +29,7 @@ import { ProPortfolioScreen } from '../screens/pro/PortfolioScreen';
 import { VerificationScreen } from '../screens/pro/VerificationScreen';
 import { EstimateScreen } from '../screens/shared/EstimateScreen';
 import { ReferralsScreen } from '../screens/shared/ReferralsScreen';
+import { DisputeScreen } from '../screens/shared/DisputeScreen';
 import { ProCalendarScreen } from '../screens/client/ProCalendarScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
 import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
@@ -114,6 +115,7 @@ function ClientStack() {
       <Stack.Screen name="Estimate"       component={EstimateScreen}      options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Referrals"      component={ReferralsScreen} />
       <Stack.Screen name="ProCalendar"    component={ProCalendarScreen} />
+      <Stack.Screen name="Dispute"        component={DisputeScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }
@@ -133,6 +135,7 @@ function ProStack() {
       <Stack.Screen name="Topup"          component={TopupScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Referrals"      component={ReferralsScreen} />
+      <Stack.Screen name="Dispute"        component={DisputeScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }
