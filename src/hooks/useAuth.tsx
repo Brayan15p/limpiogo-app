@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { savePushToken } from './usePushNotifications';
 import { AuthContextType, Profile, SignUpData } from '../types';
@@ -9,9 +9,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const realtimeRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
-    // Timeout fallback so the app never hangs on loading
     const timeout = setTimeout(() => setLoading(false), 5000);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
-      else { setProfile(null); setLoading(false); }
+      else { setProfile(null); setLoading(false); realtimeRef.current?.unsubscribe(); }
     });
 
     return () => subscription.unsubscribe();
@@ -39,6 +39,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(data);
     setLoading(false);
     savePushToken(userId);
+    subscribeToProfile(userId);
+  };
+
+  // Realtime: actualiza el perfil localmente cuando el admin cambia
+  // verification_status (o cualquier otro campo del perfil)
+  const subscribeToProfile = (userId: string) => {
+    realtimeRef.current?.unsubscribe();
+    realtimeRef.current = supabase
+      .channel(`profile:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          setProfile(prev => prev ? { ...prev, ...(payload.new as Partial<Profile>) } : prev);
+        }
+      )
+      .subscribe();
   };
 
   const signIn = async (email: string, password: string) => {

@@ -26,11 +26,19 @@ import { ProHomeScreen } from '../screens/pro/HomeScreen';
 import { ProJobsScreen } from '../screens/pro/JobsScreen';
 import { ProAvailabilityScreen } from '../screens/pro/AvailabilityScreen';
 import { ProPortfolioScreen } from '../screens/pro/PortfolioScreen';
+import { VerificationScreen } from '../screens/pro/VerificationScreen';
+import { EstimateScreen } from '../screens/shared/EstimateScreen';
+import { ReferralsScreen } from '../screens/shared/ReferralsScreen';
+import { ProCalendarScreen } from '../screens/client/ProCalendarScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
 import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { SettingsScreen } from '../screens/shared/SettingsScreen';
 import { SupportScreen } from '../screens/shared/SupportScreen';
+import { WalletScreen } from '../screens/shared/WalletScreen';
+import { TopupScreen } from '../screens/shared/TopupScreen';
+import { WalletBadge } from '../components/WalletBadge';
+import { useWallet } from '../contexts/WalletContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Colors, Shadow } from '../theme';
 
@@ -40,8 +48,14 @@ const Tab = createBottomTabNavigator();
 function ClientTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
+      screenOptions={({ route, navigation: nav }) => ({
+        headerShown: true,
+        headerStyle: { backgroundColor: Colors.bg, elevation: 0, shadowOpacity: 0 },
+        headerTitleStyle: { ...require('../theme').Typography.h4, color: Colors.ink },
+        headerRight: () => (
+          <WalletBadge onPress={() => nav.navigate('Wallet')} />
+        ),
+        headerRightContainerStyle: { paddingRight: 16 },
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 0,
@@ -94,7 +108,12 @@ function ClientStack() {
       <Stack.Screen name="Notifications"  component={NotificationsScreen} />
       <Stack.Screen name="Settings"       component={SettingsScreen} />
       <Stack.Screen name="Support"        component={SupportScreen} />
+      <Stack.Screen name="Wallet"         component={WalletScreen} />
+      <Stack.Screen name="Topup"          component={TopupScreen}    options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Estimate"       component={EstimateScreen}      options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Referrals"      component={ReferralsScreen} />
+      <Stack.Screen name="ProCalendar"    component={ProCalendarScreen} />
     </Stack.Navigator>
   );
 }
@@ -109,7 +128,11 @@ function ProStack() {
       <Stack.Screen name="Support"        component={SupportScreen} />
       <Stack.Screen name="ProAvailability" component={ProAvailabilityScreen} />
       <Stack.Screen name="ProPortfolio"   component={ProPortfolioScreen} />
+      <Stack.Screen name="Verification"   component={VerificationScreen} />
+      <Stack.Screen name="Wallet"         component={WalletScreen} />
+      <Stack.Screen name="Topup"          component={TopupScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Referrals"      component={ReferralsScreen} />
     </Stack.Navigator>
   );
 }
@@ -117,8 +140,14 @@ function ProStack() {
 function ProTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
+      screenOptions={({ route, navigation: nav }) => ({
+        headerShown: true,
+        headerStyle: { backgroundColor: Colors.bg, elevation: 0, shadowOpacity: 0 },
+        headerTitleStyle: { ...require('../theme').Typography.h4, color: Colors.ink },
+        headerRight: () => (
+          <WalletBadge onPress={() => nav.navigate('Wallet')} />
+        ),
+        headerRightContainerStyle: { paddingRight: 16 },
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 0,
@@ -185,6 +214,7 @@ export function AppNavigator() {
             <Stack.Screen name="Login"          component={LoginScreen} />
             <Stack.Screen name="Register"       component={RegisterScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="Estimate"       component={EstimateScreen}        options={{ animation: 'slide_from_bottom' }} />
           </>
         ) : profile?.role === 'pro' ? (
           <Stack.Screen name="ProRoot" component={ProStack} />

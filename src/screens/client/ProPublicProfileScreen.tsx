@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFavorites, useHeartAnim } from '../../hooks/useFavorites';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
+import { VerifiedBadge } from '../../components/VerifiedBadge';
 
 const { width: W } = Dimensions.get('window');
 const AVATAR_COLORS = [Colors.sky300, Colors.sky400, Colors.sky200, '#BAE6FD', Colors.primarySoft];
@@ -29,6 +30,7 @@ type ProProfile = {
   total_reviews: number;
   is_verified: boolean;
   phone: string | null;
+  verification_status?: import('../../types').VerificationStatus;
 };
 
 function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
@@ -86,7 +88,7 @@ export function ProPublicProfileScreen({ route, navigation }: any) {
   useEffect(() => {
     Promise.all([
       supabase.from('profiles')
-        .select('id, full_name, bio, rating, total_reviews, is_verified, phone')
+        .select('id, full_name, bio, rating, total_reviews, is_verified, phone, verification_status')
         .eq('id', proId).single(),
       supabase.from('reviews')
         .select('id, rating, comment, created_at, reviewer:reviewer_id(full_name)')
@@ -169,12 +171,7 @@ export function ProPublicProfileScreen({ route, navigation }: any) {
                 )}
               </Animated.View>
               <Text style={styles.heroName}>{pro.full_name}</Text>
-              {pro.is_verified && (
-                <View style={styles.verifiedPill}>
-                  <Ionicons name="shield-checkmark" size={12} color={Colors.primary} />
-                  <Text style={styles.verifiedText}>Profesional verificado</Text>
-                </View>
-              )}
+              <VerifiedBadge status={pro.verification_status ?? (pro.is_verified ? 'verified' : 'unverified')} size="md" />
               {pro.bio ? (
                 <Text style={styles.heroBio}>{pro.bio}</Text>
               ) : null}
@@ -253,8 +250,16 @@ export function ProPublicProfileScreen({ route, navigation }: any) {
 
       {/* CTA fijo abajo */}
       <View style={[styles.ctaBar, Shadow.lg]}>
+        {/* F14: Ver disponibilidad */}
         <Pressable
-          style={styles.ctaBtn}
+          style={styles.availBtn}
+          onPress={() => navigation.navigate('ProCalendar', { proId: pro.id, proName: pro.full_name })}
+        >
+          <Ionicons name="time-outline" size={16} color={Colors.primary} />
+          <Text style={styles.availBtnText}>Ver agenda</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.ctaBtn, { flex: 1 }]}
           onPress={() => navigation.navigate('Booking', { proId: pro.id })}
         >
           <LinearGradient colors={[Colors.primary, Colors.sky500]} style={styles.ctaGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
@@ -324,7 +329,13 @@ const styles = StyleSheet.create({
   noReviewsText: { ...Typography.h4, color: Colors.ink, marginBottom: Spacing.sm },
   noReviewsSub:  { ...Typography.body, color: Colors.ink3, textAlign: 'center' },
 
-  ctaBar:  { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: Colors.surface, paddingHorizontal: Spacing.xl, paddingBottom: 32, paddingTop: Spacing.lg, borderTopWidth: 1, borderColor: Colors.border },
+  ctaBar:  { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: Colors.surface,
+             paddingHorizontal: Spacing.xl, paddingBottom: 32, paddingTop: Spacing.lg,
+             borderTopWidth: 1, borderColor: Colors.border, flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
+  availBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: Radius.xl,
+                  paddingVertical: 16, paddingHorizontal: Spacing.lg,
+                  borderWidth: 1.5, borderColor: Colors.primarySoft, backgroundColor: Colors.primaryLight },
+  availBtnText: { ...Typography.smallBold, color: Colors.primary },
   ctaBtn:  { borderRadius: Radius.xl, overflow: 'hidden' },
   ctaGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
   ctaText: { ...Typography.bodyMed, color: '#fff', marginLeft: Spacing.sm, fontWeight: '700' },

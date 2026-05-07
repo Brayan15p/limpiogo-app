@@ -180,6 +180,15 @@ export function WelcomeScreen({ navigation }: any) {
             variant="secondary"
             icon={<Ionicons name="briefcase-outline" size={15} color={Colors.dark} />}
           />
+          {/* F16: calculadora sin login */}
+          <Pressable
+            onPress={() => navigation.navigate('Estimate')}
+            style={styles.estimateRow}
+            hitSlop={8}
+          >
+            <Ionicons name="calculator-outline" size={14} color={Colors.primary} />
+            <Text style={styles.estimateTxt}>Calcular precio antes de registrarme</Text>
+          </Pressable>
           <Pressable
             onPress={() => navigation.navigate('Login')}
             style={styles.loginRow}
@@ -279,6 +288,8 @@ const styles = StyleSheet.create({
 
   /* CTAs en el fondo */
   ctas: { gap: Spacing.md },
+  estimateRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  estimateTxt: { ...Typography.small, color: Colors.primary, fontWeight: '600' },
   loginRow: {
     flexDirection: 'row',
     justifyContent: 'center',

@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
+import { VerifiedBadge } from '../../components/VerifiedBadge';
 
 const NOTIF_KEY = 'limpiogo_notif_enabled';
 
@@ -110,6 +111,14 @@ export function ProfileScreen({ navigation }: any) {
         ...(isPro ? [
           { icon: 'calendar-outline',   label: 'Mi disponibilidad',  sub: 'Configura tus horarios',       action: () => navigation.navigate('ProAvailability') },
           { icon: 'images-outline',     label: 'Mi portafolio',      sub: 'Sube fotos de tus trabajos',   action: () => navigation.navigate('ProPortfolio') },
+          {
+            icon: profile?.verification_status === 'verified' ? 'shield-checkmark' : 'shield-outline',
+            label: 'Verificar identidad',
+            sub: profile?.verification_status === 'verified' ? 'Identidad verificada ✓'
+              : profile?.verification_status === 'pending' ? 'En revisión...'
+              : 'Genera más confianza',
+            action: () => navigation.navigate('Verification'),
+          },
           { icon: 'card-outline',       label: 'Método de cobro',    sub: 'Configura cómo recibes pagos', action: () => comingSoon('Método de cobro') },
           { icon: 'star-outline',       label: 'Mis reseñas',        sub: `${profile?.rating ?? 0} ★ promedio`, action: () => comingSoon('Mis reseñas') },
         ] : [
@@ -179,6 +188,11 @@ export function ProfileScreen({ navigation }: any) {
                 {isPro ? 'Profesional' : 'Cliente'}
               </Text>
             </View>
+            {isPro && (
+              <View style={{ marginTop: 6 }}>
+                <VerifiedBadge status={profile?.verification_status} size="sm" />
+              </View>
+            )}
             <Text style={styles.email}>{profile?.email ?? ''}</Text>
 
             {isPro && (

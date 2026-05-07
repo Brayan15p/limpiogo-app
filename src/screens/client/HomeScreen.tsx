@@ -10,6 +10,7 @@ import { useFavorites, useHeartAnim } from '../../hooks/useFavorites';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
+import { VerifiedBadge } from '../../components/VerifiedBadge';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = (SCREEN_W - Spacing.xl * 2 - Spacing.md) / 2;
@@ -29,6 +30,7 @@ type TopPro = {
   rating: number | null;
   total_reviews: number;
   is_verified: boolean;
+  verification_status?: import('../../types').VerificationStatus;
   bio: string | null;
 };
 
@@ -60,9 +62,9 @@ function ProCard({ pro, isFav, onToggleFav }: {
 
       <View style={[styles.proAvatar, { backgroundColor: bg }]}>
         <Text style={styles.proInitial}>{initials}</Text>
-        {pro.is_verified && (
+        {(pro.verification_status === 'verified' || pro.is_verified) && (
           <View style={styles.verifiedDot}>
-            <Ionicons name="checkmark-circle" size={13} color={Colors.primary} />
+            <Ionicons name="shield-checkmark" size={13} color={Colors.primary} />
           </View>
         )}
       </View>
@@ -95,7 +97,7 @@ export function HomeScreen({ navigation }: any) {
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('id, full_name, rating, total_reviews, is_verified, bio')
+      .select('id, full_name, rating, total_reviews, is_verified, bio, verification_status')
       .eq('role', 'pro')
       .order('rating', { ascending: false })
       .limit(8)

@@ -1,5 +1,26 @@
 // Design tokens — LimpioGO v2 (Blue & White — el diseño original del repo)
 // "Blue / white / green — clean, fresh, trustworthy"
+
+// Gradientes de marca — mantienen el DNA azul/navy/sky
+export const Gradients = {
+  // Hero principal — navy profundo a azul primario a sky
+  heroPrimary: ['#0C4A6E', '#1D4ED8', '#0EA5E9'] as const,
+  // Wallet card — confianza financiera
+  wallet:      ['#0C4A6E', '#2563EB', '#38BDF8'] as const,
+  // Urgente — acción inmediata (cálido pero on-brand)
+  urgent:      ['#DC2626', '#F97316'] as const,
+  // Calidad platinum — diferenciador premium
+  platinum:    ['#6366F1', '#8B5CF6'] as const,
+  // Gold badge
+  gold:        ['#D97706', '#F59E0B'] as const,
+  // Surface sutil para cards premium
+  surfaceBlue: ['#EFF6FF', '#DBEAFE'] as const,
+  // Pro earnings
+  proHero:     ['#0C4A6E', '#0369A1'] as const,
+  // Referidos — verde éxito
+  referral:    ['#065F46', '#16A34A'] as const,
+};
+
 export const Colors = {
   // Primary — azul cielo limpio
   primary: '#2563EB',        // blue-600 — CTA principal
@@ -33,19 +54,40 @@ export const Colors = {
   borderBlue:  '#BAE6FD',
 
   // Semánticos
-  ok:       '#16A34A',
-  okLight:  '#DCFCE7',
-  danger:   '#DC2626',
+  ok:          '#16A34A',
+  okLight:     '#DCFCE7',
+  okSoft:      '#F0FDF4',
+  danger:      '#DC2626',
   dangerLight: '#FEE2E2',
-  warn:     '#F59E0B',
-  warnLight: '#FEF9C3',
+  warn:        '#F59E0B',
+  warnLight:   '#FEF9C3',
 
   // Pro role — deep navy
   proAccent: '#0C4A6E',
   proLight:  '#E0F2FE',
+
+  // Wallet
+  walletGreen:      '#059669',
+  walletGreenLight: '#D1FAE5',
+  walletDebit:      '#DC2626',
+  walletDebitLight: '#FEE2E2',
+
+  // Premium badges
+  urgent:          '#DC2626',
+  urgentLight:     '#FEF2F2',
+  premium:         '#6366F1',
+  premiumLight:    '#EEF2FF',
+  goldBadge:       '#D97706',
+  goldBadgeLight:  '#FEF3C7',
+  platinumBadge:   '#8B5CF6',
+  platinumLight:   '#F5F3FF',
+
+  // Tipografía display (pantallas hero)
 };
 
 export const Typography = {
+  display: { fontSize: 44, fontWeight: '800' as const, letterSpacing: -2 },
+  hero:    { fontSize: 36, fontWeight: '800' as const, letterSpacing: -1.5 },
   h1: { fontSize: 30, fontWeight: '800' as const, letterSpacing: -0.5 },
   h2: { fontSize: 24, fontWeight: '700' as const, letterSpacing: -0.4 },
   h3: { fontSize: 20, fontWeight: '700' as const, letterSpacing: -0.2 },
@@ -55,6 +97,7 @@ export const Typography = {
   small: { fontSize: 13, fontWeight: '400' as const },
   smallBold: { fontSize: 13, fontWeight: '700' as const },
   caption: { fontSize: 11, fontWeight: '600' as const, letterSpacing: 0.5 },
+  micro: { fontSize: 10, fontWeight: '700' as const, letterSpacing: 0.8 },
 };
 
 export const Spacing = {

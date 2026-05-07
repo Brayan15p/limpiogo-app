@@ -1,5 +1,7 @@
 export type UserRole = 'client' | 'pro';
 
+export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+
 export interface Profile {
   id: string;
   email: string;
@@ -11,6 +13,12 @@ export interface Profile {
   rating?: number;
   total_reviews?: number;
   is_online?: boolean;
+  // Verificación de identidad (F10)
+  verification_status?: VerificationStatus;
+  verification_submitted_at?: string;
+  verification_provider?: string;
+  verification_provider_id?: string;
+  verification_rejection_reason?: string;
   created_at: string;
 }
 

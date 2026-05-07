@@ -41,6 +41,7 @@ export function BookingScreen({ navigation }: any) {
   const [pickedLng, setPickedLng] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [recurrence, setRecurrence] = useState<'none' | 'weekly' | 'biweekly' | 'monthly'>('none');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -81,6 +82,7 @@ export function BookingScreen({ navigation }: any) {
       status: 'open',
       scheduled_at: scheduledAt,
       address_id,
+      recurrence,
     });
 
     setLoading(false);
@@ -348,6 +350,35 @@ export function BookingScreen({ navigation }: any) {
                   </View>
                 </View>
 
+                {/* F15: Recurrencia */}
+                <Text style={[styles.fieldLabel, { marginTop: Spacing.xl }]}>¿Repetir automáticamente?</Text>
+                <View style={styles.recurrenceRow}>
+                  {([
+                    { id: 'none',      label: 'No' },
+                    { id: 'weekly',    label: 'Semanal' },
+                    { id: 'biweekly',  label: 'Quincenal' },
+                    { id: 'monthly',   label: 'Mensual' },
+                  ] as const).map(opt => (
+                    <Pressable
+                      key={opt.id}
+                      style={[styles.recurrenceChip, recurrence === opt.id && styles.recurrenceChipActive]}
+                      onPress={() => setRecurrence(opt.id)}
+                    >
+                      <Text style={[styles.recurrenceText, recurrence === opt.id && styles.recurrenceTextActive]}>
+                        {opt.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {recurrence !== 'none' && (
+                  <View style={styles.recurrenceHint}>
+                    <Ionicons name="refresh-circle-outline" size={14} color={Colors.primary} />
+                    <Text style={styles.recurrenceHintText}>
+                      Se generará un nuevo servicio automáticamente · puedes cancelarlo cuando quieras
+                    </Text>
+                  </View>
+                )}
+
                 <Text style={styles.disclaimer}>
                   Los profesionales enviarán ofertas. Tú eliges al que más te convenga.
                 </Text>
@@ -488,6 +519,17 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', gap: Spacing.sm,
   },
   primaryBtnText: { ...Typography.bodyMed, color: '#fff', fontWeight: '700' },
+
+  recurrenceRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  recurrenceChip:     { paddingVertical: 9, paddingHorizontal: Spacing.md, borderRadius: Radius.lg,
+                        borderWidth: 1.5, borderColor: Colors.border, backgroundColor: Colors.surface },
+  recurrenceChipActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
+  recurrenceText:     { ...Typography.smallBold, color: Colors.ink },
+  recurrenceTextActive: { color: Colors.primary },
+  recurrenceHint:     { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: Spacing.sm,
+                        backgroundColor: Colors.primaryLight, borderRadius: Radius.md,
+                        padding: Spacing.md },
+  recurrenceHintText: { ...Typography.caption, color: Colors.primary, flex: 1, lineHeight: 16 },
 
   successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xxxl },
   successEmoji: { fontSize: 64, marginBottom: Spacing.xxl },

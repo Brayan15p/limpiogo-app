@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
+import { VerifiedBadge } from '../../components/VerifiedBadge';
 
 const { width: W } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ type Pro = {
   rating: number | null;
   total_reviews: number;
   is_verified: boolean;
+  verification_status?: import('../../types').VerificationStatus;
   bio: string | null;
 };
 
@@ -49,9 +51,9 @@ function ProListCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
       <Animated.View style={[styles.proCard, Shadow.card, { transform: [{ scale: scaleAnim }] }]}>
         <View style={[styles.proAvatar, { backgroundColor: bg }]}>
           <Text style={styles.proInitials}>{initials}</Text>
-          {pro.is_verified && (
+          {(pro.verification_status === 'verified' || pro.is_verified) && (
             <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={14} color={Colors.primary} />
+              <Ionicons name="shield-checkmark" size={14} color={Colors.primary} />
             </View>
           )}
         </View>
@@ -59,11 +61,10 @@ function ProListCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
         <View style={styles.proInfo}>
           <View style={styles.proNameRow}>
             <Text style={styles.proName} numberOfLines={1}>{pro.full_name}</Text>
-            {pro.is_verified && (
-              <View style={styles.verifiedPill}>
-                <Text style={styles.verifiedText}>Verificado</Text>
-              </View>
-            )}
+            <VerifiedBadge
+              status={pro.verification_status ?? (pro.is_verified ? 'verified' : 'unverified')}
+              size="sm"
+            />
           </View>
           {pro.bio ? (
             <Text style={styles.proBio} numberOfLines={2}>{pro.bio}</Text>
@@ -113,7 +114,7 @@ export function SearchScreen({ navigation }: any) {
     setLoading(true);
     let q = supabase
       .from('profiles')
-      .select('id, full_name, rating, total_reviews, is_verified, bio')
+      .select('id, full_name, rating, total_reviews, is_verified, bio, verification_status')
       .eq('role', 'pro');
 
     if (query.trim()) {
