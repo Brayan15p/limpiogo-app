@@ -73,18 +73,33 @@ export function ProHomeScreen({ navigation }: any) {
     }
   };
 
-  const renderJob = ({ item }: { item: Job }) => (
+  const renderJob = ({ item }: { item: Job }) => {
+    // F23: match score para este pro
+    const matchScores = (item as any).match_scores as Record<string, number> | null;
+    const matchScore  = matchScores?.[profile!.id];
+
+    return (
     <Pressable style={[styles.card, Shadow.md]}>
       <View style={styles.cardHeader}>
         <View style={styles.serviceTag}>
           <Text style={styles.serviceEmoji}>{SERVICE_EMOJI[item.type]}</Text>
           <Text style={styles.serviceLabel}>{SERVICE_LABELS[item.type]}</Text>
         </View>
-        {item.budget ? (
-          <View style={styles.budgetBadge}>
-            <Text style={styles.budgetText}>${item.budget.toLocaleString('es-CO')}</Text>
-          </View>
-        ) : null}
+        <View style={styles.badgesRow}>
+          {matchScore !== undefined && (
+            <View style={[styles.matchBadge, matchScore >= 80 && styles.matchBadgeHigh]}>
+              <Ionicons name="sparkles" size={11} color={matchScore >= 80 ? Colors.ok : Colors.warn} />
+              <Text style={[styles.matchText, matchScore >= 80 && styles.matchTextHigh]}>
+                Match {matchScore}%
+              </Text>
+            </View>
+          )}
+          {item.budget ? (
+            <View style={styles.budgetBadge}>
+              <Text style={styles.budgetText}>${item.budget.toLocaleString('es-CO')}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.cardDetails}>
@@ -129,7 +144,8 @@ export function ProHomeScreen({ navigation }: any) {
         }
       </Pressable>
     </Pressable>
-  );
+    );
+  };
 
   return (
     <View style={styles.root}>
@@ -304,6 +320,14 @@ const styles = StyleSheet.create({
   serviceTag: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   serviceEmoji: { fontSize: 20 },
   serviceLabel: { ...Typography.bodyMed, color: Colors.ink },
+  badgesRow:      { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  matchBadge:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: Radius.full,
+                    paddingVertical: 3, paddingHorizontal: 8, backgroundColor: Colors.warnLight,
+                    borderWidth: 1, borderColor: Colors.warn },
+  matchBadgeHigh: { backgroundColor: Colors.okLight, borderColor: Colors.ok },
+  matchText:      { ...Typography.micro, color: Colors.warn, fontWeight: '700' },
+  matchTextHigh:  { color: Colors.ok },
+
   budgetBadge: {
     backgroundColor: Colors.okLight, borderRadius: Radius.full,
     paddingVertical: 4, paddingHorizontal: 10,

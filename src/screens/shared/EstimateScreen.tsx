@@ -230,6 +230,15 @@ export function EstimateScreen({ navigation }: any) {
             </Text>
           </View>
 
+          {/* F29: acceso a cotización por foto */}
+          <Pressable
+            style={[styles.photoBtn, Shadow.sm]}
+            onPress={() => navigation.navigate('PhotoEstimate')}
+          >
+            <Ionicons name="camera-outline" size={18} color={Colors.primary} />
+            <Text style={styles.photoBtnText}>O toma una foto de tu espacio →</Text>
+          </Pressable>
+
           {/* CTA */}
           <Pressable style={[styles.cta, Shadow.cta]} onPress={goSearch}>
             <Ionicons name="search" size={18} color="#fff" />
@@ -322,6 +331,11 @@ const styles = StyleSheet.create({
 
   note:     { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.lg, alignItems: 'flex-start' },
   noteText: { ...Typography.small, color: Colors.ink3, flex: 1, lineHeight: 18 },
+
+  photoBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm,
+                  backgroundColor: Colors.primaryLight, borderRadius: Radius.xl, paddingVertical: 14,
+                  marginTop: Spacing.lg, borderWidth: 1.5, borderColor: Colors.primarySoft },
+  photoBtnText: { ...Typography.smallBold, color: Colors.primary },
 
   cta:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm,
              backgroundColor: Colors.primary, borderRadius: Radius.xl, paddingVertical: 18,

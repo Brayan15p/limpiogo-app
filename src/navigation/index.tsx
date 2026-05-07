@@ -30,6 +30,7 @@ import { VerificationScreen } from '../screens/pro/VerificationScreen';
 import { EstimateScreen } from '../screens/shared/EstimateScreen';
 import { ReferralsScreen } from '../screens/shared/ReferralsScreen';
 import { DisputeScreen } from '../screens/shared/DisputeScreen';
+import { PhotoEstimateScreen } from '../screens/shared/PhotoEstimateScreen';
 import { ProCalendarScreen } from '../screens/client/ProCalendarScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
 import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
@@ -115,7 +116,8 @@ function ClientStack() {
       <Stack.Screen name="Estimate"       component={EstimateScreen}      options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Referrals"      component={ReferralsScreen} />
       <Stack.Screen name="ProCalendar"    component={ProCalendarScreen} />
-      <Stack.Screen name="Dispute"        component={DisputeScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Dispute"        component={DisputeScreen}       options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="PhotoEstimate"  component={PhotoEstimateScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }
@@ -218,6 +220,7 @@ export function AppNavigator() {
             <Stack.Screen name="Register"       component={RegisterScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="Estimate"       component={EstimateScreen}        options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="PhotoEstimate"  component={PhotoEstimateScreen}   options={{ animation: 'slide_from_bottom' }} />
           </>
         ) : profile?.role === 'pro' ? (
           <Stack.Screen name="ProRoot" component={ProStack} />

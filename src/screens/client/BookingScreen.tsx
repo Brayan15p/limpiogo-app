@@ -72,7 +72,7 @@ export function BookingScreen({ navigation }: any) {
       address_id = addr?.id;
     }
 
-    const { error } = await supabase.from('jobs').insert({
+    const { data: newJob, error } = await supabase.from('jobs').insert({
       client_id: profile.id,
       type: serviceType,
       bedrooms,
@@ -83,7 +83,14 @@ export function BookingScreen({ navigation }: any) {
       scheduled_at: scheduledAt,
       address_id,
       recurrence,
-    });
+    }).select('id').single();
+
+    // F23: invocar match-pros en background (no bloquear UX)
+    if (newJob?.id && pickedLat && pickedLng) {
+      supabase.functions.invoke('match-pros', {
+        body: { job_id: newJob.id, lat: pickedLat, lng: pickedLng, job_type: serviceType },
+      }).catch(() => { /* best-effort */ });
+    }
 
     setLoading(false);
     if (!error) setSuccess(true);
