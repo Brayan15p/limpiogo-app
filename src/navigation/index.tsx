@@ -31,7 +31,10 @@ import { EstimateScreen } from '../screens/shared/EstimateScreen';
 import { ReferralsScreen } from '../screens/shared/ReferralsScreen';
 import { DisputeScreen } from '../screens/shared/DisputeScreen';
 import { PhotoEstimateScreen } from '../screens/shared/PhotoEstimateScreen';
+import { ARScanScreen } from '../screens/shared/ARScanScreen';
+import { CoinsScreen } from '../screens/shared/CoinsScreen';
 import { ProCalendarScreen } from '../screens/client/ProCalendarScreen';
+import { HomeLevelScreen } from '../screens/client/HomeLevelScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
 import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
@@ -118,6 +121,9 @@ function ClientStack() {
       <Stack.Screen name="ProCalendar"    component={ProCalendarScreen} />
       <Stack.Screen name="Dispute"        component={DisputeScreen}       options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="PhotoEstimate"  component={PhotoEstimateScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="ARScan"         component={ARScanScreen}        options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Coins"          component={CoinsScreen} />
+      <Stack.Screen name="HomeLevel"      component={HomeLevelScreen} />
     </Stack.Navigator>
   );
 }
@@ -138,6 +144,7 @@ function ProStack() {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Referrals"      component={ReferralsScreen} />
       <Stack.Screen name="Dispute"        component={DisputeScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Coins"          component={CoinsScreen} />
     </Stack.Navigator>
   );
 }

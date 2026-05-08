@@ -8,9 +8,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFavorites, useHeartAnim } from '../../hooks/useFavorites';
 import { useAuth } from '../../hooks/useAuth';
+import { useHomeLevel } from '../../hooks/useHomeLevel';
+import { usePreferredPro } from '../../hooks/usePreferredPro';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
-import { VerifiedBadge } from '../../components/VerifiedBadge';
+import { HomeLevelBadge } from '../../components/HomeLevelBadge';
+import { VoiceBookingSheet } from '../../components/VoiceBookingSheet';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = (SCREEN_W - Spacing.xl * 2 - Spacing.md) / 2;
@@ -88,7 +91,10 @@ function ProCard({ pro, isFav, onToggleFav }: {
 export function HomeScreen({ navigation }: any) {
   const { profile, signOut } = useAuth();
   const { favIds, toggle } = useFavorites();
-  const [topPros, setTopPros] = useState<TopPro[]>([]);
+  const [topPros, setTopPros]         = useState<TopPro[]>([]);
+  const [voiceOpen, setVoiceOpen]     = useState(false);
+  const { level }                     = useHomeLevel();
+  const { preferred }                 = usePreferredPro();
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'ahí';
   const hour = new Date().getHours();
@@ -130,14 +136,74 @@ export function HomeScreen({ navigation }: any) {
             </View>
 
             {/* Búsqueda — navega a SearchScreen */}
-            <Pressable style={[styles.search, Shadow.sm]} onPress={() => navigation.navigate('Search')}>
-              <Ionicons name="search-outline" size={18} color={Colors.ink3} />
-              <Text style={styles.searchPh}>Buscar servicio o limpiador…</Text>
-              <View style={styles.filterBtn}>
-                <Ionicons name="options-outline" size={16} color={Colors.primary} />
-              </View>
-            </Pressable>
+            <View style={styles.searchRow}>
+              <Pressable style={[styles.search, Shadow.sm, { flex: 1 }]} onPress={() => navigation.navigate('Search')}>
+                <Ionicons name="search-outline" size={18} color={Colors.ink3} />
+                <Text style={styles.searchPh}>Buscar servicio o limpiador…</Text>
+                <View style={styles.filterBtn}>
+                  <Ionicons name="options-outline" size={16} color={Colors.primary} />
+                </View>
+              </Pressable>
+              {/* F33: Voice Booking */}
+              <Pressable style={[styles.micBtn, Shadow.sm]} onPress={() => setVoiceOpen(true)}>
+                <Ionicons name="mic" size={20} color={Colors.primary} />
+              </Pressable>
+            </View>
           </LinearGradient>
+
+          {/* F48: Nivel del Hogar */}
+          {level && (
+            <View style={styles.section}>
+              <View style={styles.sectionRow}>
+                <Text style={styles.sectionTitle}>Mi hogar</Text>
+                <Pressable hitSlop={8} onPress={() => navigation.navigate('HomeLevel')}>
+                  <Text style={styles.seeAll}>Ver niveles</Text>
+                </Pressable>
+              </View>
+              <HomeLevelBadge
+                levelName={level.levelName}
+                bookingsCompleted={level.bookingsCompleted}
+                nextThreshold={level.nextThreshold}
+                progress={level.progress}
+                onPress={() => navigation.navigate('HomeLevel')}
+              />
+            </View>
+          )}
+
+          {/* F50: Mi Pro de Confianza */}
+          {preferred && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Mi Pro de Confianza</Text>
+              <Pressable
+                style={[styles.preferredCard, Shadow.card]}
+                onPress={() => navigation.navigate('ProPublicProfile', { proId: preferred.proId })}
+              >
+                <View style={[styles.preferredAvatar, { backgroundColor: Colors.primarySoft }]}>
+                  <Text style={styles.preferredInitial}>
+                    {preferred.fullName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.preferredInfo}>
+                  <Text style={styles.preferredName}>{preferred.fullName}</Text>
+                  <View style={styles.preferredMeta}>
+                    {preferred.rating && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        <Ionicons name="star" size={11} color={Colors.warn} />
+                        <Text style={styles.preferredRating}>{Number(preferred.rating).toFixed(1)}</Text>
+                      </View>
+                    )}
+                    <Text style={styles.preferredTogether}>· {preferred.bookingsTogether} servicios juntos</Text>
+                  </View>
+                </View>
+                <Pressable
+                  style={styles.preferredBtn}
+                  onPress={() => navigation.navigate('Booking', { preferredProId: preferred.proId })}
+                >
+                  <Text style={styles.preferredBtnText}>Agendar</Text>
+                </Pressable>
+              </Pressable>
+            </View>
+          )}
 
           {/* Servicios */}
           <View style={styles.section}>
@@ -198,6 +264,21 @@ export function HomeScreen({ navigation }: any) {
             )}
           </View>
 
+          {/* AR Scan Banner — F34 */}
+          <Pressable
+            style={[styles.arBanner, Shadow.sm]}
+            onPress={() => navigation.navigate('ARScan')}
+          >
+            <View style={styles.arBannerIcon}>
+              <Text style={{ fontSize: 22 }}>📐</Text>
+            </View>
+            <View style={styles.arBannerText}>
+              <Text style={styles.arBannerTitle}>Escanea tu espacio con IA</Text>
+              <Text style={styles.arBannerSub}>Foto → m² → precio al instante</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+          </Pressable>
+
           {/* Banner CTA */}
           <Pressable
             style={[styles.postBanner, Shadow.cta]}
@@ -214,6 +295,20 @@ export function HomeScreen({ navigation }: any) {
 
         </ScrollView>
       </SafeAreaView>
+
+      {/* F33: Voice Booking Sheet */}
+      <VoiceBookingSheet
+        visible={voiceOpen}
+        onClose={() => setVoiceOpen(false)}
+        onConfirm={(parsed) => {
+          navigation.navigate('Booking', {
+            prefServiceType:   parsed.service_type,
+            prefDate:          parsed.date,
+            prefTime:          parsed.time,
+            prefNotes:         parsed.notes ?? '',
+          });
+        }}
+      />
     </View>
   );
 }
@@ -237,12 +332,30 @@ const styles = StyleSheet.create({
                 alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarTxt:  { ...Typography.bodyMed, color: '#fff', fontWeight: '800' },
 
+  searchRow:{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   search:   { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,
               borderRadius: Radius.full, paddingVertical: 13, paddingHorizontal: Spacing.lg,
               borderWidth: 1, borderColor: Colors.sky200 },
   searchPh: { flex: 1, ...Typography.body, color: Colors.ink4, marginLeft: Spacing.sm },
   filterBtn:{ width: 32, height: 32, borderRadius: Radius.sm, backgroundColor: Colors.primarySoft,
               alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  micBtn:   { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surface,
+              alignItems: 'center', justifyContent: 'center',
+              borderWidth: 1, borderColor: Colors.primarySoft },
+
+  preferredCard:    { backgroundColor: Colors.surface, borderRadius: Radius.xl, padding: Spacing.md,
+                      flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
+                      borderWidth: 1.5, borderColor: Colors.primarySoft },
+  preferredAvatar:  { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  preferredInitial: { ...Typography.h4, color: Colors.primary, fontWeight: '800' },
+  preferredInfo:    { flex: 1 },
+  preferredName:    { ...Typography.bodyMed, color: Colors.ink, fontWeight: '700' },
+  preferredMeta:    { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  preferredRating:  { ...Typography.small, color: Colors.ink2, fontWeight: '600' },
+  preferredTogether:{ ...Typography.small, color: Colors.ink3 },
+  preferredBtn:     { backgroundColor: Colors.primary, borderRadius: Radius.full,
+                      paddingHorizontal: 14, paddingVertical: 7 },
+  preferredBtnText: { ...Typography.small, color: '#fff', fontWeight: '700' },
 
   section:      { paddingHorizontal: Spacing.xl, marginTop: Spacing.xxl },
   sectionRow:   { flexDirection: 'row', justifyContent: 'space-between',
@@ -281,6 +394,16 @@ const styles = StyleSheet.create({
 
   prosEmpty:     { paddingVertical: Spacing.xl, alignItems: 'center' },
   prosEmptyText: { ...Typography.small, color: Colors.ink4 },
+
+  arBanner:      { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface,
+                   marginHorizontal: Spacing.xl, marginTop: Spacing.xl,
+                   borderRadius: Radius.xl, padding: Spacing.lg,
+                   borderWidth: 1.5, borderColor: Colors.primarySoft, gap: Spacing.md },
+  arBannerIcon:  { width: 46, height: 46, borderRadius: 23, backgroundColor: Colors.primaryLight,
+                   alignItems: 'center', justifyContent: 'center' },
+  arBannerText:  { flex: 1 },
+  arBannerTitle: { ...Typography.smallBold, color: Colors.ink },
+  arBannerSub:   { ...Typography.caption, color: Colors.ink3, marginTop: 2 },
 
   postBanner:    { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primary,
                    marginHorizontal: Spacing.xl, marginTop: Spacing.xxl,

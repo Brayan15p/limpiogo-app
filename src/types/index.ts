@@ -13,6 +13,10 @@ export interface Profile {
   rating?: number;
   total_reviews?: number;
   is_online?: boolean;
+  // Sprint 6: Fidelización
+  limpio_coins?: number;
+  limpio_score?: number;
+  limpio_score_tier?: string;
   // Verificación de identidad (F10)
   verification_status?: VerificationStatus;
   verification_submitted_at?: string;

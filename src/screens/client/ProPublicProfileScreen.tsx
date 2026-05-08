@@ -31,6 +31,7 @@ type ProProfile = {
   is_verified: boolean;
   phone: string | null;
   verification_status?: import('../../types').VerificationStatus;
+  health_certifications?: string[];
 };
 
 function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
@@ -88,7 +89,7 @@ export function ProPublicProfileScreen({ route, navigation }: any) {
   useEffect(() => {
     Promise.all([
       supabase.from('profiles')
-        .select('id, full_name, bio, rating, total_reviews, is_verified, phone, verification_status')
+        .select('id, full_name, bio, rating, total_reviews, is_verified, phone, verification_status, health_certifications')
         .eq('id', proId).single(),
       supabase.from('reviews')
         .select('id, rating, comment, created_at, reviewer:reviewer_id(full_name)')
@@ -201,6 +202,33 @@ export function ProPublicProfileScreen({ route, navigation }: any) {
         </View>
 
         <View style={styles.body}>
+
+          {/* Certificaciones de salud — F38 */}
+          {pro.health_certifications && pro.health_certifications.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Certificaciones</Text>
+              <View style={styles.certBadgesRow}>
+                {pro.health_certifications.map(cert => {
+                  const MAP: Record<string, { emoji: string; label: string }> = {
+                    baby_safe:    { emoji: '👶', label: 'Apta bebés' },
+                    pet_friendly: { emoji: '🐾', label: 'Pet-friendly' },
+                    anti_allergy: { emoji: '🌿', label: 'Anti-alérgica' },
+                    no_toxics:    { emoji: '🌱', label: 'Sin tóxicos' },
+                    eco:          { emoji: '♻️', label: 'Eco-friendly' },
+                    medical:      { emoji: '🏥', label: 'Desinfección médica' },
+                  };
+                  const info = MAP[cert];
+                  if (!info) return null;
+                  return (
+                    <View key={cert} style={styles.certBadge}>
+                      <Text style={{ fontSize: 14 }}>{info.emoji}</Text>
+                      <Text style={styles.certBadgeLabel}>{info.label}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
           {/* Rating breakdown */}
           {reviews.length > 0 && (
@@ -339,4 +367,10 @@ const styles = StyleSheet.create({
   ctaBtn:  { borderRadius: Radius.xl, overflow: 'hidden' },
   ctaGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
   ctaText: { ...Typography.bodyMed, color: '#fff', marginLeft: Spacing.sm, fontWeight: '700' },
+
+  certBadgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  certBadge:     { flexDirection: 'row', alignItems: 'center', gap: 4,
+                   backgroundColor: Colors.okLight, borderRadius: Radius.full,
+                   paddingHorizontal: 10, paddingVertical: 4 },
+  certBadgeLabel:{ ...Typography.small, color: Colors.ok, fontWeight: '600' },
 });
