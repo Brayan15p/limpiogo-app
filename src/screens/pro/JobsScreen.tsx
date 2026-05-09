@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Image, Pressable, RefreshControl,
+  ActivityIndicator, Alert, FlatList, Image, Linking, Pressable, RefreshControl,
   StatusBar, StyleSheet, Text, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -128,6 +128,17 @@ export function ProJobsScreen({ navigation }: any) {
   };
 
   // F17: "Marcar listo" requiere foto antes
+  const openDirections = (item: Application) => {
+    const job = item.jobs as any;
+    const addr = job?.addresses;
+    if (!addr) { Alert.alert('Sin dirección', 'Este servicio no tiene dirección registrada.'); return; }
+    const query = encodeURIComponent(`${addr.street ?? ''} ${addr.city ?? ''}`.trim());
+    // Intentar Google Maps nativo, fallback a web
+    const gmaps = `comgooglemaps://?q=${query}&directionsmode=driving`;
+    const web   = `https://maps.google.com/?q=${query}`;
+    Linking.canOpenURL(gmaps).then(can => Linking.openURL(can ? gmaps : web));
+  };
+
   const markCompleted = (item: Application) => {
     const job = item.jobs as any;
     if (!job?.photo_before) {
@@ -311,6 +322,13 @@ export function ProJobsScreen({ navigation }: any) {
             >
               <Ionicons name="chatbubble-outline" size={14} color={Colors.primary} />
               <Text style={styles.outlineBtnText}>Chat</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.outlineBtn, { flex: 1 }]}
+              onPress={() => openDirections(item)}
+            >
+              <Ionicons name="navigate-outline" size={14} color={Colors.primary} />
+              <Text style={styles.outlineBtnText}>Cómo llegar</Text>
             </Pressable>
             <Pressable
               style={[styles.completedBtn, { flex: 1 }, completing === item.id && { opacity: 0.6 }]}

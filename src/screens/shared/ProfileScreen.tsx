@@ -1,13 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform,
+  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform,
   Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { setLocale, t } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
 import { VerifiedBadge } from '../../components/VerifiedBadge';
@@ -33,6 +35,7 @@ export function ProfileScreen({ navigation }: any) {
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const isPro = profile?.role === 'pro';
   const initial = profile?.full_name?.charAt(0).toUpperCase() ?? 'U';
@@ -62,6 +65,34 @@ export function ProfileScreen({ navigation }: any) {
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Salir', style: 'destructive', onPress: signOut },
     ]);
+  };
+
+  const changeAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para cambiar la foto.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, aspect: [1, 1], quality: 0.8,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    setUploadingAvatar(true);
+    const asset = result.assets[0];
+    const ext   = asset.uri.split('.').pop() ?? 'jpg';
+    const path  = `avatars/${profile!.id}.${ext}`;
+    const blob  = await (await fetch(asset.uri)).blob();
+
+    const { error: uploadErr } = await supabase.storage
+      .from('avatars').upload(path, blob, { contentType: `image/${ext}`, upsert: true });
+
+    if (uploadErr) { Alert.alert('Error', 'No se pudo subir la foto.'); setUploadingAvatar(false); return; }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    await updateProfile({ avatar_url: data.publicUrl });
+    setUploadingAvatar(false);
   };
 
   const openEditProfile = () => {
@@ -145,7 +176,19 @@ export function ProfileScreen({ navigation }: any) {
           sub: location ? 'Activa' : 'Inactiva',
           toggle: true, toggleValue: location, onToggle: toggleLocation,
         },
-        { icon: 'language-outline', label: 'Idioma', sub: 'Español' },
+        {
+          icon: 'language-outline', label: t('settings.language'),
+          sub: t('settings.spanish') + ' / ' + t('settings.english'),
+          action: () => Alert.alert(
+            t('settings.language'),
+            '',
+            [
+              { text: '🇨🇴 Español', onPress: () => setLocale('es') },
+              { text: '🇺🇸 English', onPress: () => setLocale('en') },
+              { text: t('cancel'), style: 'cancel' },
+            ],
+          ),
+        },
       ],
     },
     {
@@ -174,18 +217,24 @@ export function ProfileScreen({ navigation }: any) {
 
           {/* Hero */}
           <LinearGradient colors={[Colors.sky100, Colors.sky50, Colors.bg]} style={styles.hero}>
-            <View style={[styles.avatarWrap, Shadow.md]}>
-              <LinearGradient
-                colors={isPro ? ['#0C4A6E', '#0EA5E9'] : ['#38BDF8', '#2563EB']}
-                style={styles.avatar}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.avatarText}>{initial}</Text>
-              </LinearGradient>
+            <Pressable style={[styles.avatarWrap, Shadow.md]} onPress={changeAvatar} disabled={uploadingAvatar}>
+              {profile?.avatar_url ? (
+                <Image source={{ uri: profile.avatar_url }} style={styles.avatarImg} />
+              ) : (
+                <LinearGradient
+                  colors={isPro ? ['#0C4A6E', '#0EA5E9'] : ['#38BDF8', '#2563EB']}
+                  style={styles.avatar}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.avatarText}>{initial}</Text>
+                </LinearGradient>
+              )}
               <View style={styles.editBadge}>
-                <Ionicons name="pencil" size={10} color="#fff" />
+                {uploadingAvatar
+                  ? <ActivityIndicator size={10} color="#fff" />
+                  : <Ionicons name="camera" size={10} color="#fff" />}
               </View>
-            </View>
+            </Pressable>
             <Text style={styles.name}>{name}</Text>
             <View style={styles.rolePill}>
               <Ionicons name={isPro ? 'briefcase' : 'home'} size={11} color={isPro ? Colors.proAccent : Colors.primary} />
@@ -326,6 +375,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { fontSize: 34, fontWeight: '800', color: '#fff' },
+  avatarImg:  { width: 84, height: 84, borderRadius: 42 },
   editBadge: {
     position: 'absolute', bottom: 2, right: 2,
     width: 22, height: 22, borderRadius: 11,

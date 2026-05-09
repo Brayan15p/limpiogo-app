@@ -26,10 +26,12 @@ import { ProHomeScreen } from '../screens/pro/HomeScreen';
 import { ProJobsScreen } from '../screens/pro/JobsScreen';
 import { ProAvailabilityScreen } from '../screens/pro/AvailabilityScreen';
 import { ProPortfolioScreen } from '../screens/pro/PortfolioScreen';
+import { FirstJobScreen } from '../screens/pro/FirstJobScreen';
 import { VerificationScreen } from '../screens/pro/VerificationScreen';
 import { EstimateScreen } from '../screens/shared/EstimateScreen';
 import { ReferralsScreen } from '../screens/shared/ReferralsScreen';
 import { DisputeScreen } from '../screens/shared/DisputeScreen';
+import { InsuranceScreen } from '../screens/shared/InsuranceScreen';
 import { PhotoEstimateScreen } from '../screens/shared/PhotoEstimateScreen';
 import { ARScanScreen } from '../screens/shared/ARScanScreen';
 import { CoinsScreen } from '../screens/shared/CoinsScreen';
@@ -120,6 +122,7 @@ function ClientStack() {
       <Stack.Screen name="Referrals"      component={ReferralsScreen} />
       <Stack.Screen name="ProCalendar"    component={ProCalendarScreen} />
       <Stack.Screen name="Dispute"        component={DisputeScreen}       options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Insurance"      component={InsuranceScreen}     options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="PhotoEstimate"  component={PhotoEstimateScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="ARScan"         component={ARScanScreen}        options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Coins"          component={CoinsScreen} />
@@ -144,6 +147,8 @@ function ProStack() {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Referrals"      component={ReferralsScreen} />
       <Stack.Screen name="Dispute"        component={DisputeScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="Insurance"      component={InsuranceScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="FirstJob"       component={FirstJobScreen}  options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="Coins"          component={CoinsScreen} />
     </Stack.Navigator>
   );

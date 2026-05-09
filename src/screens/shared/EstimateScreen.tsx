@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { useDemandPricing } from '../../hooks/useDemandPricing';
 import { Colors, Gradients, Radius, Shadow, Spacing, Typography } from '../../theme';
 import { JobType } from '../../types';
 
@@ -37,6 +38,7 @@ function fmt(n: number) {
 
 export function EstimateScreen({ navigation }: any) {
   const { user } = useAuth();
+  const { demand, applyMultiplier } = useDemandPricing();
   const [service, setService] = useState<JobType>('basic');
   const [sqm, setSqm]         = useState(60);
   const [extras, setExtras]   = useState<Set<string>>(new Set());
@@ -48,8 +50,9 @@ export function EstimateScreen({ navigation }: any) {
     const e = EXTRAS.find(x => x.id === id);
     return acc + (e?.price ?? 0);
   }, 0);
-  const total = svc.base + sqm * svc.perSqm + extrasTotal;
-  const totalMax = Math.round(total * 1.15);
+  const baseTotal = svc.base + sqm * svc.perSqm + extrasTotal;
+  const total     = applyMultiplier(baseTotal);
+  const totalMax  = Math.round(total * 1.15);
 
   const animatePrice = () => {
     Animated.sequence([
@@ -103,6 +106,15 @@ export function EstimateScreen({ navigation }: any) {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+          {/* Surge banner */}
+          {demand.isHighDemand && (
+            <View style={styles.surgeBanner}>
+              <Ionicons name="flame" size={14} color={Colors.warn} />
+              <Text style={styles.surgeBannerText}>{demand.label}</Text>
+              <Text style={styles.surgeSub}> · Pocos pros disponibles ahora</Text>
+            </View>
+          )}
 
           {/* Price Hero */}
           <LinearGradient colors={Gradients.heroPrimary} style={styles.priceCard}>
@@ -273,6 +285,11 @@ const styles = StyleSheet.create({
   scroll:      { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xl },
 
   // Price hero
+  surgeBanner:     { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.warnLight,
+                     borderRadius: Radius.lg, padding: Spacing.md, marginBottom: Spacing.sm,
+                     borderWidth: 1, borderColor: Colors.warn },
+  surgeBannerText: { ...Typography.smallBold, color: Colors.warn },
+  surgeSub:        { ...Typography.small, color: Colors.ink3 },
   priceCard:   { borderRadius: Radius.xl, padding: Spacing.xl, alignItems: 'center', gap: Spacing.sm,
                  marginBottom: Spacing.xl },
   priceLabel:  { ...Typography.small, color: Colors.sky200, letterSpacing: 0.5, textTransform: 'uppercase' },

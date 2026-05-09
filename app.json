@@ -37,7 +37,8 @@
           "androidMode": "default",
           "androidCollapsedTitle": "LimpioGO"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "eas": {

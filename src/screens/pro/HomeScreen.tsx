@@ -7,9 +7,11 @@ import {
   Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../../hooks/useAuth';
 import { useLocationTracking } from '../../hooks/useLocationTracking';
 import { useProStats } from '../../hooks/useProStats';
+import { FIRST_JOB_KEY } from './FirstJobScreen';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
 import { Job, JobType } from '../../types';
@@ -49,6 +51,14 @@ export function ProHomeScreen({ navigation }: any) {
   }, []);
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
+
+  // Mostrar tutorial primer trabajo si nunca lo vio
+  useEffect(() => {
+    SecureStore.getItemAsync(FIRST_JOB_KEY).then(val => {
+      if (!val) navigation.navigate('FirstJob');
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openOfferModal = (job: Job) => {
     setOfferJob(job);

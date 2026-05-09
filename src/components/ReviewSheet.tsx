@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useRef, useState } from 'react';
 import {
-  Animated, Keyboard, KeyboardAvoidingView, Modal,
+  ActivityIndicator, Animated, Image, Keyboard, KeyboardAvoidingView, Modal,
   Platform, Pressable, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,10 +23,12 @@ const LABELS = ['', 'Malo', 'Regular', 'Bueno', 'Muy bueno', '¡Excelente!'];
 
 export function ReviewSheet({ visible, jobId, proId, proName, onDone, onDismiss }: Props) {
   const { profile } = useAuth();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+  const [rating, setRating]     = useState(0);
+  const [comment, setComment]   = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [done, setDone]         = useState(false);
 
   // Animaciones por estrella
   const scales = useRef([1, 2, 3, 4, 5].map(() => new Animated.Value(1))).current;
@@ -44,12 +47,14 @@ export function ReviewSheet({ visible, jobId, proId, proName, onDone, onDismiss 
     setLoading(true);
     Keyboard.dismiss();
 
+    const photoUrl = await uploadPhoto();
     const { error } = await supabase.from('reviews').insert({
       job_id:      jobId,
       reviewer_id: profile.id,
       reviewed_id: proId,
       rating,
-      comment: comment.trim() || null,
+      comment:   comment.trim() || null,
+      photo_url: photoUrl,
     });
 
     if (!error) {
@@ -60,9 +65,32 @@ export function ReviewSheet({ visible, jobId, proId, proName, onDone, onDismiss 
     setLoading(false);
   };
 
+  const pickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, aspect: [4, 3], quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) setPhotoUri(result.assets[0].uri);
+  };
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photoUri) return null;
+    setUploading(true);
+    const ext  = photoUri.split('.').pop() ?? 'jpg';
+    const path = `reviews/${jobId}_${Date.now()}.${ext}`;
+    const blob = await (await fetch(photoUri)).blob();
+    const { error } = await supabase.storage.from('job-photos').upload(path, blob, { contentType: `image/${ext}` });
+    setUploading(false);
+    if (error) return null;
+    return supabase.storage.from('job-photos').getPublicUrl(path).data.publicUrl;
+  };
+
   const reset = () => {
     setRating(0);
     setComment('');
+    setPhotoUri(null);
     setDone(false);
   };
 
@@ -124,6 +152,25 @@ export function ReviewSheet({ visible, jobId, proId, proName, onDone, onDismiss 
               <Text style={[styles.ratingLabel, rating > 0 && { color: Colors.warn }]}>
                 {rating > 0 ? LABELS[rating] : 'Toca para calificar'}
               </Text>
+
+              {/* Foto opcional */}
+              {photoUri ? (
+                <Pressable style={styles.photoPreview} onPress={pickPhoto}>
+                  <Image source={{ uri: photoUri }} style={styles.photoImg} resizeMode="cover" />
+                  <View style={styles.photoChange}>
+                    <Ionicons name="camera" size={14} color="#fff" />
+                    <Text style={styles.photoChangeTxt}>Cambiar</Text>
+                  </View>
+                </Pressable>
+              ) : (
+                <Pressable style={styles.photoBtn} onPress={pickPhoto} disabled={uploading}>
+                  {uploading
+                    ? <ActivityIndicator size="small" color={Colors.primary} />
+                    : <><Ionicons name="image-outline" size={18} color={Colors.primary} />
+                       <Text style={styles.photoBtnTxt}>Agregar foto (opcional)</Text></>
+                  }
+                </Pressable>
+              )}
 
               {/* Comentario opcional */}
               <TextInput
@@ -191,6 +238,17 @@ const styles = StyleSheet.create({
 
   skip:         { alignItems: 'center', marginTop: Spacing.md, paddingVertical: 8 },
   skipText:     { ...Typography.small, color: Colors.ink3 },
+  photoBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  borderWidth: 1.5, borderColor: Colors.primarySoft, borderStyle: 'dashed',
+                  borderRadius: Radius.md, paddingVertical: 12, backgroundColor: Colors.primaryLight,
+                  marginBottom: Spacing.sm },
+  photoBtnTxt:  { ...Typography.smallBold, color: Colors.primary },
+  photoPreview: { position: 'relative', borderRadius: Radius.md, overflow: 'hidden', marginBottom: Spacing.sm },
+  photoImg:     { width: '100%', height: 140, borderRadius: Radius.md },
+  photoChange:  { position: 'absolute', bottom: 8, right: 8, flexDirection: 'row', alignItems: 'center',
+                  gap: 4, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 12,
+                  paddingVertical: 4, paddingHorizontal: 8 },
+  photoChangeTxt: { ...Typography.caption, color: '#fff', fontWeight: '700' },
 
   // Estado éxito
   successBox:    { alignItems: 'center', paddingVertical: Spacing.xl, gap: Spacing.lg },

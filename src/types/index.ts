@@ -123,6 +123,7 @@ export interface Message {
   job_id: string;
   sender_id: string;
   content: string;
+  image_url?: string;
   read_at?: string;
   created_at: string;
   profiles?: Pick<Profile, 'full_name' | 'avatar_url'>;

@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -23,9 +25,10 @@ export function ChatScreen({ route, navigation }: any) {
   const { jobId, otherName } = route.params as { jobId: string; otherName: string };
   const { profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [text, setText] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
+  const [text, setText]           = useState('');
+  const [loading, setLoading]     = useState(true);
+  const [sending, setSending]     = useState(false);
+  const [uploadingImg, setUploadingImg] = useState(false);
   const flatRef = useRef<FlatList>(null);
 
   // Cargar mensajes iniciales
@@ -112,6 +115,44 @@ export function ChatScreen({ route, navigation }: any) {
     setSending(false);
   };
 
+  const sendImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7, allowsEditing: false,
+    });
+    if (result.canceled || !result.assets[0] || !profile) return;
+
+    setUploadingImg(true);
+    const asset = result.assets[0];
+    const ext   = asset.uri.split('.').pop() ?? 'jpg';
+    const path  = `chat/${jobId}/${Date.now()}.${ext}`;
+    const blob  = await (await fetch(asset.uri)).blob();
+
+    const { error } = await supabase.storage
+      .from('job-photos').upload(path, blob, { contentType: `image/${ext}` });
+
+    if (!error) {
+      const { data } = supabase.storage.from('job-photos').getPublicUrl(path);
+      const optimistic: Message = {
+        id: `temp-img-${Date.now()}`,
+        job_id: jobId,
+        sender_id: profile.id,
+        content: '',
+        image_url: data.publicUrl,
+        created_at: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, optimistic]);
+      setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
+      await supabase.from('messages').insert({
+        job_id: jobId, sender_id: profile.id,
+        content: '', image_url: data.publicUrl,
+      });
+    }
+    setUploadingImg(false);
+  };
+
   const formatTime = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
@@ -141,10 +182,15 @@ export function ChatScreen({ route, navigation }: any) {
           </View>
         )}
         <View style={[styles.bubbleWrap, isMe ? styles.bubbleWrapMe : styles.bubbleWrapOther]}>
-          <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther, Shadow.sm]}>
-            <Text style={[styles.bubbleTxt, isMe ? styles.bubbleTxtMe : styles.bubbleTxtOther]}>
-              {item.content}
-            </Text>
+          <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther, Shadow.sm,
+                         item.image_url && styles.bubbleImg]}>
+            {item.image_url ? (
+              <Image source={{ uri: item.image_url }} style={styles.chatImg} resizeMode="cover" />
+            ) : (
+              <Text style={[styles.bubbleTxt, isMe ? styles.bubbleTxtMe : styles.bubbleTxtOther]}>
+                {item.content}
+              </Text>
+            )}
             <View style={styles.bubbleMeta}>
               <Text style={[styles.bubbleTime, isMe && styles.bubbleTimeMe]}>
                 {formatTime(item.created_at)}
@@ -217,6 +263,11 @@ export function ChatScreen({ route, navigation }: any) {
           {/* Input */}
           <SafeAreaView edges={['bottom']} style={styles.inputWrap}>
             <View style={[styles.inputRow, Shadow.md]}>
+              <Pressable style={styles.imgBtn} onPress={sendImage} disabled={uploadingImg}>
+                {uploadingImg
+                  ? <ActivityIndicator size="small" color={Colors.primary} />
+                  : <Ionicons name="image-outline" size={22} color={Colors.primary} />}
+              </Pressable>
               <TextInput
                 style={styles.input}
                 placeholder="Escribe un mensaje…"
@@ -300,9 +351,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderWidth: 1, borderColor: Colors.sky100,
   },
-  bubbleTxt: { ...Typography.body, lineHeight: 20 },
-  bubbleTxtMe: { color: '#fff' },
+  bubbleTxt:      { ...Typography.body, lineHeight: 20 },
+  bubbleTxtMe:    { color: '#fff' },
   bubbleTxtOther: { color: Colors.ink },
+  bubbleImg:      { padding: 0, overflow: 'hidden' },
+  chatImg:        { width: 220, height: 160, borderRadius: Radius.md },
+  imgBtn:         { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   bubbleMeta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3, justifyContent: 'flex-end' },
   bubbleTime: { ...Typography.caption, color: Colors.ink4 },
   bubbleTimeMe: { color: 'rgba(255,255,255,0.65)' },
