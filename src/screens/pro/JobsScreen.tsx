@@ -44,18 +44,19 @@ export function ProJobsScreen({ navigation }: any) {
     const { data } = await supabase
       .from('applications')
       .select(`
-        *,
+        id, job_id, pro_id, offered_price, status, message, created_at,
         jobs(
           id, type, bedrooms, bathrooms, budget, agreed_price, status,
-          scheduled_at, photo_before, photo_after, client_rating,
-          addresses(label, city),
+          scheduled_at, completed_at, photo_before, photo_after, client_rating,
+          addresses(label, street, city),
           client:profiles!jobs_client_id_fkey(id, full_name, client_score)
         )
       `)
       .eq('pro_id', profile!.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(40);
 
-    setApplications(data ?? []);
+    setApplications((data ?? []) as unknown as Application[]);
     // job activo para SOS
     const active = (data ?? []).find((a: any) => a.status === 'accepted' && a.jobs?.status === 'in_progress');
     setActiveJobId(active ? (active as any).job_id : null);
@@ -191,7 +192,7 @@ export function ProJobsScreen({ navigation }: any) {
     );
   };
 
-  const renderItem = ({ item }: { item: Application }) => {
+  const renderItem = useCallback(({ item }: { item: Application }) => {
     const job       = item.jobs as any;
     const jobStatus = job?.status ?? 'pending';
     const appStatus = jobStatus === 'completed' ? 'completed' : item.status;
@@ -399,7 +400,7 @@ export function ProJobsScreen({ navigation }: any) {
         )}
       </View>
     );
-  };
+  }, [navigation, completing, uploadingPhoto, clientsReviewed, profile]);
 
   return (
     <View style={styles.root}>

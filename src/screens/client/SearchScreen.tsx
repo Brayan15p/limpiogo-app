@@ -251,7 +251,11 @@ export function SearchScreen({ navigation }: any) {
           <FlatList
             data={pros}
             keyExtractor={p => p.id}
-            contentContainerStyle={styles.list}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
+            windowSize={5}
+            removeClippedSubviews
+            contentContainerStyle={{ padding: Spacing.xl }}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <Text style={styles.resultCount}>

@@ -42,10 +42,11 @@ export function ProHomeScreen({ navigation }: any) {
   const fetchJobs = useCallback(async () => {
     const { data } = await supabase
       .from('jobs')
-      .select('*, addresses(label, street, city)')
+      .select('id, type, bedrooms, bathrooms, budget, notes, scheduled_at, created_at, client_id, addresses(label, street, city)')
       .eq('status', 'open')
-      .order('created_at', { ascending: false });
-    setJobs(data ?? []);
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setJobs((data ?? []) as unknown as Job[]);
     setLoading(false);
     setRefreshing(false);
   }, []);

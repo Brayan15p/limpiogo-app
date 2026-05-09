@@ -59,8 +59,8 @@ export function useDemandPricing(city?: string) {
     };
 
     fetchDemand();
-    // Actualizar cada 5 minutos
-    const interval = setInterval(fetchDemand, 5 * 60 * 1000);
+    // Actualizar cada 10 minutos — no necesita ser más frecuente
+    const interval = setInterval(fetchDemand, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [city]);
 

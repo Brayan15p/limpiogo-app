@@ -91,15 +91,16 @@ export function BookingsListScreen({ navigation }: any) {
     const [{ data: jobsData }, { data: reviewsData }] = await Promise.all([
       supabase
         .from('jobs')
-        .select('*, addresses(label, street, city), pro:profiles!jobs_pro_id_fkey(full_name), photo_before, photo_after')
+        .select('id, type, status, bedrooms, bathrooms, budget, agreed_price, scheduled_at, completed_at, recurrence, series_id, pro_id, created_at, photo_before, photo_after, addresses(label, street, city), pro:profiles!jobs_pro_id_fkey(full_name)')
         .eq('client_id', profile!.id)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(30),
       supabase
         .from('reviews')
         .select('job_id')
         .eq('reviewer_id', profile!.id),
     ]);
-    setJobs(jobsData ?? []);
+    setJobs((jobsData ?? []) as unknown as Job[]);
     setReviewed(new Set((reviewsData ?? []).map((r: any) => r.job_id)));
 
     // F46: detectar primer job completado sin celebrar
@@ -143,7 +144,7 @@ export function BookingsListScreen({ navigation }: any) {
     );
   };
 
-  const renderItem = ({ item }: { item: Job }) => {
+  const renderItem = useCallback(({ item }: { item: Job }) => {
     const s        = STATUS_INFO[item.status];
     const proName  = (item as any).pro?.full_name ?? 'Tu limpiador';
     const canReview = item.status === 'completed' && item.pro_id && !reviewed.has(item.id);
@@ -324,7 +325,7 @@ export function BookingsListScreen({ navigation }: any) {
         )}
       </View>
     );
-  };
+  }, [reviewed, navigation, profile]);
 
   return (
     <View style={styles.root}>
