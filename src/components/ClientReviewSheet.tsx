@@ -35,24 +35,12 @@ export function ClientReviewSheet({ visible, jobId, clientId, clientName, onDone
     if (rating === 0) return;
     setLoading(true);
     await supabase
-      .from('bookings')
+      .from('jobs')
       .update({ client_rating: rating, client_review: comment || null })
       .eq('id', jobId);
 
-    // Recalcula client_score promedio en profiles
-    const { data } = await supabase
-      .from('bookings')
-      .select('client_rating')
-      .eq('client_id', clientId)
-      .not('client_rating', 'is', null);
-
-    if (data && data.length > 0) {
-      const avg = data.reduce((s: number, r: any) => s + r.client_rating, 0) / data.length;
-      await supabase
-        .from('profiles')
-        .update({ client_score: Math.round(avg * 10) / 10 })
-        .eq('id', clientId);
-    }
+    // Recalcula client_score via RPC
+    await supabase.rpc('update_client_score', { p_client_id: clientId });
 
     setLoading(false);
     setDone(true);

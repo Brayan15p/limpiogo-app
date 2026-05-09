@@ -92,10 +92,19 @@ function ProListCard({ pro, onPress }: { pro: Pro; onPress: () => void }) {
   );
 }
 
+const HEALTH_FILTERS = [
+  { id: 'baby_safe',    label: 'Apta bebés',    emoji: '👶' },
+  { id: 'pet_friendly', label: 'Pet-friendly',  emoji: '🐾' },
+  { id: 'anti_allergy', label: 'Anti-alérgica', emoji: '🌿' },
+  { id: 'no_toxics',    label: 'Sin tóxicos',   emoji: '🌱' },
+  { id: 'eco',          label: 'Eco',           emoji: '♻️' },
+];
+
 export function SearchScreen({ navigation }: any) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
+  const [healthFilter, setHealthFilter] = useState<string | null>(null);
   const [pros, setPros] = useState<Pro[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -108,17 +117,20 @@ export function SearchScreen({ navigation }: any) {
     Animated.spring(filterAnim, { toValue, useNativeDriver: false, speed: 14, bounciness: 4 }).start();
   };
 
-  const filterHeight = filterAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 110] });
+  const filterHeight = filterAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 180] });
 
   const fetchPros = useCallback(async () => {
     setLoading(true);
     let q = supabase
       .from('profiles')
-      .select('id, full_name, rating, total_reviews, is_verified, bio, verification_status')
+      .select('id, full_name, rating, total_reviews, is_verified, bio, verification_status, health_certifications')
       .eq('role', 'pro');
 
     if (query.trim()) {
       q = q.ilike('full_name', `%${query.trim()}%`);
+    }
+    if (healthFilter) {
+      q = q.contains('health_certifications', [healthFilter]);
     }
     if (sortBy === 'rating') q = q.order('rating', { ascending: false });
     else if (sortBy === 'reviews') q = q.order('total_reviews', { ascending: false });
@@ -126,7 +138,7 @@ export function SearchScreen({ navigation }: any) {
     const { data } = await q.limit(40);
     setPros(data ?? []);
     setLoading(false);
-  }, [query, category, sortBy]);
+  }, [query, category, sortBy, healthFilter]);
 
   useEffect(() => {
     const t = setTimeout(fetchPros, 350);
@@ -204,6 +216,28 @@ export function SearchScreen({ navigation }: any) {
                   </Pressable>
                 ))}
               </View>
+              <Text style={[styles.filterTitle, { marginTop: Spacing.sm }]}>Certificación de salud</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.sortRow}>
+                  <Pressable
+                    style={[styles.sortChip, healthFilter === null && styles.sortChipActive]}
+                    onPress={() => setHealthFilter(null)}
+                  >
+                    <Text style={[styles.sortLabel, healthFilter === null && styles.sortLabelActive]}>Todos</Text>
+                  </Pressable>
+                  {HEALTH_FILTERS.map(f => (
+                    <Pressable
+                      key={f.id}
+                      style={[styles.sortChip, healthFilter === f.id && styles.sortChipActive]}
+                      onPress={() => setHealthFilter(healthFilter === f.id ? null : f.id)}
+                    >
+                      <Text style={[styles.sortLabel, healthFilter === f.id && styles.sortLabelActive]}>
+                        {f.emoji} {f.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
             </View>
           </Animated.View>
         </LinearGradient>

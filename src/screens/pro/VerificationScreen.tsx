@@ -19,7 +19,7 @@ import { supabase } from '../../lib/supabase';
 import { Colors, Gradients, Radius, Shadow, Spacing, Typography } from '../../theme';
 
 // ─── Tipos ────────────────────────────────────────────
-type Step = 'intro' | 'cedula' | 'selfie' | 'review' | 'done' | 'pending' | 'rejected';
+type Step = 'intro' | 'cedula' | 'selfie' | 'certifications' | 'review' | 'done' | 'pending' | 'rejected';
 
 interface PhotoState {
   uri: string | null;
@@ -31,7 +31,7 @@ interface PhotoState {
 const EMPTY_PHOTO: PhotoState = { uri: null, uploading: false, uploaded: false, path: null };
 
 // ─── Barra de progreso ────────────────────────────────
-const STEPS: Step[] = ['intro', 'cedula', 'selfie', 'review', 'done'];
+const STEPS: Step[] = ['intro', 'cedula', 'selfie', 'certifications', 'review', 'done'];
 
 function ProgressBar({ current }: { current: Step }) {
   const idx = STEPS.indexOf(current);
@@ -205,6 +205,7 @@ export function VerificationScreen({ navigation }: any) {
   const [step, setStep] = useState<Step>('intro');
   const [cedula, setCedula] = useState<PhotoState>(EMPTY_PHOTO);
   const [selfie, setSelfie] = useState<PhotoState>(EMPTY_PHOTO);
+  const [selectedCerts, setSelectedCerts] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -269,6 +270,14 @@ export function VerificationScreen({ navigation }: any) {
     if (!cedula.path || !selfie.path) return;
     setSubmitting(true);
     try {
+      // Guardar certificaciones de salud seleccionadas
+      if (selectedCerts.size > 0) {
+        await supabase
+          .from('profiles')
+          .update({ health_certifications: [...selectedCerts] })
+          .eq('id', user!.id);
+      }
+
       // Llamar Edge Function verify-identity (Truora)
       const { error } = await supabase.functions.invoke('verify-identity', {
         body: {
@@ -280,11 +289,10 @@ export function VerificationScreen({ navigation }: any) {
 
       if (error) throw error;
 
-      // Actualizar perfil localmente
       await updateProfile({ verification_status: 'pending' } as any);
       goTo('done');
     } catch {
-      // Edge Function aún no existe — simular pending para que el flujo se vea completo
+      // Edge Function aún no existe — simular pending
       await updateProfile({ verification_status: 'pending' } as any);
       goTo('done');
     } finally {
@@ -405,6 +413,50 @@ export function VerificationScreen({ navigation }: any) {
                 <Text style={[styles.guideText, { color: g.ok ? Colors.ink : Colors.ink2 }]}>{g.text}</Text>
               </View>
             ))}
+          </View>
+        </ScrollView>
+      );
+
+      // ── CERTIFICACIONES ──
+      case 'certifications': return (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewTitle}>Certificaciones de salud</Text>
+            <Text style={styles.reviewSub}>
+              Selecciona las certificaciones que aplican a tu trabajo. Opcional — aparecerán como badges en tu perfil.
+            </Text>
+            {[
+              { id: 'baby_safe',   label: 'Apta para bebés',         emoji: '👶', desc: 'Productos sin químicos agresivos' },
+              { id: 'pet_friendly',label: 'Pet-friendly',            emoji: '🐾', desc: 'Seguro para mascotas' },
+              { id: 'anti_allergy',label: 'Anti-alérgica',           emoji: '🌿', desc: 'Sin alérgenos comunes' },
+              { id: 'no_toxics',   label: 'Sin tóxicos',            emoji: '🌱', desc: 'Solo productos naturales' },
+              { id: 'eco',         label: 'Eco-friendly',            emoji: '♻️', desc: 'Materiales biodegradables' },
+              { id: 'medical',     label: 'Desinfección médica',     emoji: '🏥', desc: 'Para espacios de salud' },
+            ].map(cert => {
+              const active = selectedCerts.has(cert.id);
+              return (
+                <Pressable
+                  key={cert.id}
+                  style={[styles.certRow, active && styles.certRowActive]}
+                  onPress={() => {
+                    setSelectedCerts(prev => {
+                      const n = new Set(prev);
+                      n.has(cert.id) ? n.delete(cert.id) : n.add(cert.id);
+                      return n;
+                    });
+                  }}
+                >
+                  <Text style={{ fontSize: 24 }}>{cert.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.certLabel, active && styles.certLabelActive]}>{cert.label}</Text>
+                    <Text style={styles.certDesc}>{cert.desc}</Text>
+                  </View>
+                  <View style={[styles.certCheck, active && styles.certCheckActive]}>
+                    {active && <Ionicons name="checkmark" size={14} color="#fff" />}
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
         </ScrollView>
       );
@@ -628,11 +680,27 @@ export function VerificationScreen({ navigation }: any) {
     if (step === 'selfie') return (
       <Pressable
         style={({ pressed }) => [styles.ctaBtn, !selfie.uploaded && styles.ctaBtnDisabled, pressed && { opacity: 0.9 }]}
-        onPress={() => goTo('review')}
+        onPress={() => goTo('certifications')}
         disabled={!selfie.uploaded}
       >
         <LinearGradient
           colors={selfie.uploaded ? Gradients.heroPrimary : [Colors.ink4, Colors.ink4]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+          style={styles.ctaGradient}
+        >
+          <Text style={styles.ctaLabel}>Certificaciones</Text>
+          <Ionicons name="arrow-forward" size={18} color="#fff" />
+        </LinearGradient>
+      </Pressable>
+    );
+
+    if (step === 'certifications') return (
+      <Pressable
+        style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.9 }]}
+        onPress={() => goTo('review')}
+      >
+        <LinearGradient
+          colors={Gradients.heroPrimary}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={styles.ctaGradient}
         >
@@ -662,9 +730,9 @@ export function VerificationScreen({ navigation }: any) {
     return null;
   };
 
-  const canGoBack = step === 'cedula' || step === 'selfie' || step === 'review';
+  const canGoBack = step === 'cedula' || step === 'selfie' || step === 'certifications' || step === 'review';
   const prevStep: Partial<Record<Step, Step>> = {
-    cedula: 'intro', selfie: 'cedula', review: 'selfie',
+    cedula: 'intro', selfie: 'cedula', certifications: 'selfie', review: 'certifications',
   };
 
   return (
@@ -890,4 +958,17 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   ctaLabel: { ...Typography.bodyMed, color: '#fff', fontSize: 16 },
+
+  // Certificaciones F38
+  certRow:       { flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
+                   backgroundColor: Colors.surface, borderRadius: Radius.lg,
+                   padding: Spacing.lg, marginBottom: Spacing.sm,
+                   borderWidth: 1.5, borderColor: Colors.border },
+  certRowActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
+  certLabel:     { ...Typography.smallBold, color: Colors.ink },
+  certLabelActive: { color: Colors.primary },
+  certDesc:      { ...Typography.caption, color: Colors.ink3, marginTop: 2 },
+  certCheck:     { width: 22, height: 22, borderRadius: 11, borderWidth: 2,
+                   borderColor: Colors.border, alignItems: 'center', justifyContent: 'center' },
+  certCheckActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
 });

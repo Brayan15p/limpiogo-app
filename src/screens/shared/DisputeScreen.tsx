@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator, Alert, Pressable, ScrollView, StatusBar,
+  ActivityIndicator, Alert, Image, Pressable, ScrollView, StatusBar,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -134,6 +134,7 @@ export function DisputeScreen({ navigation, route }: any) {
           <View style={styles.evidenceRow}>
             {evidence.map((url, i) => (
               <View key={i} style={styles.evidenceThumb}>
+                <Image source={{ uri: url }} style={styles.evidenceImg} resizeMode="cover" />
                 <Pressable style={styles.evidenceRemove} onPress={() => setEvidence(prev => prev.filter((_, j) => j !== i))}>
                   <Ionicons name="close-circle" size={18} color={Colors.danger} />
                 </Pressable>
@@ -199,8 +200,9 @@ const styles = StyleSheet.create({
 
   evidenceRow:     { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
   evidenceThumb:   { width: 80, height: 80, borderRadius: Radius.md, backgroundColor: Colors.surfaceAlt,
-                     position: 'relative' },
-  evidenceRemove:  { position: 'absolute', top: -6, right: -6, backgroundColor: '#fff', borderRadius: 10 },
+                     position: 'relative', overflow: 'hidden' },
+  evidenceImg:     { width: '100%', height: '100%' },
+  evidenceRemove:  { position: 'absolute', top: 2, right: 2, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10 },
   evidenceAdd:     { width: 80, height: 80, borderRadius: Radius.md, borderWidth: 1.5,
                      borderColor: Colors.primarySoft, borderStyle: 'dashed',
                      backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', gap: 4 },

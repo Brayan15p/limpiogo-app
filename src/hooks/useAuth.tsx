@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signUp = async ({ email, password, full_name, phone, role }: SignUpData) => {
+  const signUp = async ({ email, password, full_name, phone, role, referral_code }: SignUpData) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -76,12 +76,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (!error && data.user) {
+      // Resolver referred_by si viene un código de referido válido
+      let referred_by: string | null = null;
+      if (referral_code) {
+        const { data: refProfile } = await supabase
+          .from('profiles')
+          .select('referral_code')
+          .eq('referral_code', referral_code)
+          .single();
+        if (refProfile) referred_by = referral_code;
+      }
+
       await supabase.from('profiles').insert({
         id: data.user.id,
         email,
         full_name,
         phone,
         role,
+        ...(referred_by ? { referred_by } : {}),
       });
     }
     return { error };

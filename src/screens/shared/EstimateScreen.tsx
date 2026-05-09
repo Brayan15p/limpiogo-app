@@ -5,6 +5,7 @@ import {
   Animated, Pressable, ScrollView, StatusBar, StyleSheet, Text, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../hooks/useAuth';
 import { Colors, Gradients, Radius, Shadow, Spacing, Typography } from '../../theme';
 import { JobType } from '../../types';
 
@@ -35,6 +36,7 @@ function fmt(n: number) {
 }
 
 export function EstimateScreen({ navigation }: any) {
+  const { user } = useAuth();
   const [service, setService] = useState<JobType>('basic');
   const [sqm, setSqm]         = useState(60);
   const [extras, setExtras]   = useState<Set<string>>(new Set());
@@ -79,6 +81,11 @@ export function EstimateScreen({ navigation }: any) {
   };
 
   const goSearch = () => {
+    if (!user) {
+      // Usuario sin auth: llevar a registro con el estimado como contexto
+      navigation.navigate('Register', { prefilterBudget: total, prefilterType: service });
+      return;
+    }
     navigation.navigate('Search', { prefilterBudget: total, prefilterType: service });
   };
 
@@ -241,8 +248,10 @@ export function EstimateScreen({ navigation }: any) {
 
           {/* CTA */}
           <Pressable style={[styles.cta, Shadow.cta]} onPress={goSearch}>
-            <Ionicons name="search" size={18} color="#fff" />
-            <Text style={styles.ctaText}>Buscar pros para este precio</Text>
+            <Ionicons name={user ? 'search' : 'person-add'} size={18} color="#fff" />
+            <Text style={styles.ctaText}>
+              {user ? 'Buscar pros para este precio' : 'Registrarme y buscar pros'}
+            </Text>
           </Pressable>
 
           <View style={{ height: 32 }} />

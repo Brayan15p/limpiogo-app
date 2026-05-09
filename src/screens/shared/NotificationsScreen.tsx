@@ -123,7 +123,7 @@ export function NotificationsScreen({ navigation }: any) {
 
   const markRead = (id: string) => {
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    supabase.from('notifications').update({ read: true }).eq('id', id).then(() => {});
+    supabase.from('notifications').update({ read: true }).eq('id', id).eq('user_id', user?.id).then(() => {});
   };
 
   const markAllRead = () => {

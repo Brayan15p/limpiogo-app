@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClientReviewSheet } from '../../components/ClientReviewSheet';
 import { SosButton } from '../../components/SosButton';
 import { useAuth } from '../../hooks/useAuth';
+import { useOfflineJobs } from '../../hooks/useOfflineJobs';
 import { supabase } from '../../lib/supabase';
 import { Colors, Radius, Shadow, Spacing, Typography } from '../../theme';
 import { Application } from '../../types';
@@ -28,6 +29,7 @@ const STATUS_INFO: Record<string, { label: string; color: string; bg: string }> 
 
 export function ProJobsScreen({ navigation }: any) {
   const { profile } = useAuth();
+  const { isOnline } = useOfflineJobs();
   const [applications, setApplications]     = useState<Application[]>([]);
   const [loading, setLoading]               = useState(true);
   const [refreshing, setRefreshing]         = useState(false);
@@ -146,13 +148,19 @@ export function ProJobsScreen({ navigation }: any) {
           text: 'Sí, completado',
           onPress: async () => {
             setCompleting(item.id);
-            await supabase
-              .from('jobs')
-              .update({ status: 'completed', completed_at: new Date().toISOString() })
-              .eq('id', item.job_id);
+            await Promise.all([
+              supabase
+                .from('jobs')
+                .update({ status: 'completed', completed_at: new Date().toISOString() })
+                .eq('id', item.job_id),
+              supabase
+                .from('applications')
+                .update({ status: 'completed' })
+                .eq('id', item.id),
+            ]);
             setApplications(prev =>
               prev.map(a => a.id === item.id
-                ? { ...a, jobs: { ...(a.jobs as any), status: 'completed' } }
+                ? { ...a, status: 'completed', jobs: { ...(a.jobs as any), status: 'completed' } }
                 : a,
               ),
             );
@@ -381,6 +389,12 @@ export function ProJobsScreen({ navigation }: any) {
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           <Text style={styles.title}>Mis trabajos</Text>
+          {!isOnline && (
+            <View style={styles.offlineBanner}>
+              <Ionicons name="cloud-offline-outline" size={14} color="#fff" />
+              <Text style={styles.offlineBannerText}>Sin conexión · Modo offline</Text>
+            </View>
+          )}
         </View>
         {loading ? (
           <ActivityIndicator style={{ marginTop: 40 }} color={Colors.primary} />
@@ -429,7 +443,11 @@ export function ProJobsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: Colors.bg },
   safe:   { flex: 1 },
-  header: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.lg, paddingBottom: Spacing.md },
+  header: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.lg, paddingBottom: Spacing.md, gap: Spacing.sm },
+  offlineBanner:     { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+                       backgroundColor: Colors.ink3, borderRadius: Radius.full,
+                       paddingVertical: 4, paddingHorizontal: 10 },
+  offlineBannerText: { ...Typography.caption, color: '#fff', fontWeight: '700' },
   title:  { ...Typography.h2, color: Colors.ink },
   list:   { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, gap: Spacing.md },
 

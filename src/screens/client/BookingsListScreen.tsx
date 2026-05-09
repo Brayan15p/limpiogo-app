@@ -5,6 +5,7 @@ import {
   Pressable, RefreshControl, StatusBar, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BeforeAfterCard } from '../../components/BeforeAfterCard';
 import { FirstBookingModal } from '../../components/FirstBookingModal';
 import { GuaranteeSheet } from '../../components/GuaranteeSheet';
 import { ReviewSheet } from '../../components/ReviewSheet';
@@ -80,6 +81,7 @@ export function BookingsListScreen({ navigation }: any) {
   const [reviewTarget, setReviewTarget] = useState<{ jobId: string; proId: string; proName: string } | null>(null);
   // F17: visor de fotos
   const [photoViewer, setPhotoViewer] = useState<{ before: string; after: string } | null>(null);
+  const [shareCard, setShareCard] = useState<{ before: string; after: string; proName: string; serviceLabel: string } | null>(null);
   // F45: garantía
   const [guaranteeTarget, setGuaranteeTarget] = useState<{ jobId: string } | null>(null);
   // F46: ritual primera vez
@@ -239,6 +241,22 @@ export function BookingsListScreen({ navigation }: any) {
           </Pressable>
         )}
 
+        {/* F59: Botón compartir tarjeta viral */}
+        {hasPhotos && item.status === 'completed' && (
+          <Pressable
+            style={styles.shareTransformBtn}
+            onPress={() => setShareCard({
+              before: photoBefore!,
+              after: photoAfter!,
+              proName,
+              serviceLabel: SERVICE_LABEL[item.type],
+            })}
+          >
+            <Ionicons name="share-social-outline" size={14} color={Colors.primary} />
+            <Text style={styles.shareTransformText}>Compartir mi transformación ✨</Text>
+          </Pressable>
+        )}
+
         {/* Acciones: en progreso */}
         {item.status === 'in_progress' && item.pro_id && (
           <View style={styles.actionRow}>
@@ -370,6 +388,18 @@ export function BookingsListScreen({ navigation }: any) {
         />
       )}
 
+      {/* F59: Tarjeta viral before/after */}
+      {shareCard && (
+        <BeforeAfterCard
+          visible={!!shareCard}
+          before={shareCard.before}
+          after={shareCard.after}
+          proName={shareCard.proName}
+          serviceLabel={shareCard.serviceLabel}
+          onClose={() => setShareCard(null)}
+        />
+      )}
+
       {/* F46: Ritual primera vez */}
       <FirstBookingModal
         visible={firstBookingPro !== null}
@@ -423,6 +453,10 @@ const styles = StyleSheet.create({
   photoThumb:      { width: 80, height: 80, borderRadius: Radius.md, backgroundColor: Colors.surfaceAlt },
   photoExpandHint: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
   photoExpandText: { ...Typography.small, color: Colors.primary, fontWeight: '600' },
+  shareTransformBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                       marginTop: Spacing.sm, borderRadius: Radius.md, paddingVertical: 10,
+                       borderWidth: 1, borderColor: Colors.primarySoft, backgroundColor: Colors.primaryLight },
+  shareTransformText: { ...Typography.smallBold, color: Colors.primary },
 
   recurringBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
                     backgroundColor: Colors.primaryLight, borderRadius: Radius.full,

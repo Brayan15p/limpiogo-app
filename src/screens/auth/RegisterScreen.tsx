@@ -16,7 +16,7 @@ export function RegisterScreen({ navigation, route }: any) {
   const { signUp } = useAuth();
   const [role, setRole] = useState<UserRole>(route.params?.role ?? 'client');
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm: '', referral_code: '' });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const set = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -41,6 +41,7 @@ export function RegisterScreen({ navigation, route }: any) {
     const { error } = await signUp({
       email: form.email.trim().toLowerCase(), password: form.password,
       full_name: form.full_name.trim(), phone: form.phone.trim(), role,
+      referral_code: form.referral_code.trim().toUpperCase() || undefined,
     });
     setLoading(false);
     if (error) Alert.alert('Error', error.message);
@@ -108,6 +109,8 @@ export function RegisterScreen({ navigation, route }: any) {
                     value={form.email} onChangeText={set('email')} keyboardType="email-address" autoCapitalize="none" error={errors.email} />
                   <Input label="Teléfono" icon="call-outline" placeholder="+52 55 1234 5678"
                     value={form.phone} onChangeText={set('phone')} keyboardType="phone-pad" error={errors.phone} />
+                  <Input label="Código de referido (opcional)" icon="gift-outline" placeholder="Ej: AB3F9C12"
+                    value={form.referral_code} onChangeText={set('referral_code')} autoCapitalize="characters" />
                   <Button label="Continuar" onPress={() => v1() && setStep(2)} />
                 </>
               ) : (

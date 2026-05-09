@@ -42,6 +42,7 @@ export interface SignUpData {
   full_name: string;
   phone: string;
   role: UserRole;
+  referral_code?: string;
 }
 
 // Navigation
@@ -69,7 +70,7 @@ export type ProTabParamList = {
 
 export type JobType = 'basic' | 'deep' | 'move' | 'office' | 'custom';
 export type JobStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-export type ApplicationStatus = 'pending' | 'accepted' | 'rejected';
+export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
 
 export interface Job {
   id: string;
